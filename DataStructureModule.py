@@ -90,7 +90,7 @@ def CloseFile() -> None:
     DBFileHandle.close()
 
 
-def CrossJoin(*tables: Table) -> Table:
+def From(*tables: Table) -> Table:
     """
     Calculating Cartesian product of `tables1,[tables2,tables3,...]`
     """
@@ -274,15 +274,14 @@ def _Test():
     #PrintTable(Where(table_2, lambda line: line['Score'] > 90))
     #PrintTable(Select(table_1, ['No', 'Name']))
 
-    # SELECT * FROM table_1, table_2 WHERE 'Student.No'='Score.No' AND Score.Score>=60
-    PrintTable(Where(CrossJoin(table_1, table_2),
+    # SELECT * FROM table_1, table_2 WHERE Student.No=Score.No AND Score.Score>=60
+    PrintTable(Where(From(table_1, table_2),
                      lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60))
 
-    (Delete(table_2, lambda line: line['Score'] < 90))
-    PrintTable(table_2)
-
-    (Insert(table_2, (20012, 59)))
-    PrintTable(table_2)
+    # DELETE FROM table_2 WHERE table_2.Score < 90
+    PrintTable(Delete(table_2, lambda line: line['Score'] < 90))
+    # INSERT INTO table_2 values (20012,59)
+    PrintTable(Insert(table_2, (20012, 59)))
 
     SaveFile(db)
     CloseFile()
