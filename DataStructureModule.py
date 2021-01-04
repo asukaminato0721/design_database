@@ -82,7 +82,7 @@ def SaveFile(database: list) -> int:
     return 0
 
 
-def CloseFile():
+def CloseFile() -> None:
     """
     Close the Database file
     """
@@ -181,9 +181,9 @@ def Select(table: Table, fieldList: list) -> Table:
 
 
 def Insert(table: Table, row: tuple) -> Table:
+    # TODO : Datatype Check
     """
     Insert `row` into `table`
-    TODO : Datatype Check
     """
     if(len(table.TableField) == len(row)):
         table.TableData.append(row)
@@ -193,7 +193,7 @@ def Insert(table: Table, row: tuple) -> Table:
         return None
 
 
-def Delete(table: Table, constraints: tuple) -> Table:
+def Delete(table: Table, constraints) -> Table:
     # TODO : Need to refactor
     """
     Delete rows from `table` where rows fit `constraints`\n
@@ -201,17 +201,17 @@ def Delete(table: Table, constraints: tuple) -> Table:
     Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
     """
     fieldName = []
-    delIndex = []
+    rowsData = []
     for field in table.TableField:
         fieldName.append(field.FieldName)
-    for i in range(len(table.TableData)):
+
+    for tableRow in table.TableData:
         line = dict()
-        for j in range(len(fieldName)):
-            line[fieldName[j]] = table.TableData[i][j]
-        if(constraints(line) == True):
-            delIndex.append(i)
-    for i in delIndex:
-        table.TableData.pop(i)
+        for fName in fieldName:
+            line[fName] = tableRow[fieldName.index(fName)]
+        if(constraints(line) == False):
+            rowsData.append(tableRow)
+    table.TableData = rowsData
     return table
 
 
@@ -242,7 +242,13 @@ def _Test():
                     [
                         ('Mike', 10011, 'M'),
                         ('Louise', 10012, 'M'),
-                        ('Monika', 10013, 'F')
+                        ('Monika', 10013, 'F'),
+                        ('Jason', 10014, 'M'),
+                        ('Alice', 10015, 'F'),
+                        ('Ulrica', 10016, 'F'),
+                        ('Bill', 10017, 'F'),
+                        ('Alex', 10018, 'M'),
+                        ('Jeb', 10019, 'F'),
                     ]
                     )
     table_2 = Table('Score',
@@ -253,26 +259,30 @@ def _Test():
                     [
                         (10011, 89),
                         (10012, 92),
-                        (10013, 99)
+                        (10013, 99),
+                        (10014, 77),
+                        (10015, 52),
+                        (10016, 55),
+                        (10017, 87),
+                        (10018, 80),
+                        (10019, 91),
                     ]
                     )
 
-    PrintTable(db[0])
-
     db = [table_1, table_2]
 
-    PrintTable(Where(table_2, lambda line: line['Score'] > 90))
-    PrintTable(Select(table_1, ['No', 'Name']))
+    #PrintTable(Where(table_2, lambda line: line['Score'] > 90))
+    #PrintTable(Select(table_1, ['No', 'Name']))
 
     # SELECT * FROM table_1, table_2 WHERE 'Student.No'='Score.No' AND Score.Score>=60
     PrintTable(Where(CrossJoin(table_1, table_2),
                      lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60))
 
     (Delete(table_2, lambda line: line['Score'] < 90))
-    # PrintTable(table_2)
+    PrintTable(table_2)
 
     (Insert(table_2, (20012, 59)))
-    # PrintTable(table_2)
+    PrintTable(table_2)
 
     SaveFile(db)
     CloseFile()
