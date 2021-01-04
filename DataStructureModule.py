@@ -128,7 +128,7 @@ def CrossJoin(*tables: Table) -> Table:
     return retTable
 
 
-def Where(table: Table, constraints: tuple) -> Table:
+def Where(table: Table, constraints) -> Table:
     # TODO : Need to refactor
     """
     Get rows from `table` where rows fit `constraints`\n
@@ -263,8 +263,16 @@ def _Test():
 
     PrintTable(Where(table_2, lambda line: line['Score'] > 90))
     PrintTable(Select(table_1, ['No', 'Name']))
-    PrintTable(Delete(table_2, lambda line: line['Score'] < 90))
-    PrintTable(table_2)
+
+    # SELECT * FROM table_1, table_2 WHERE 'Student.No'='Score.No' AND Score.Score>=60
+    PrintTable(Where(CrossJoin(table_1, table_2),
+                     lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60))
+
+    (Delete(table_2, lambda line: line['Score'] < 90))
+    # PrintTable(table_2)
+
+    (Insert(table_2, (20012, 59)))
+    # PrintTable(table_2)
 
     SaveFile(db)
     CloseFile()
