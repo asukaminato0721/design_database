@@ -140,25 +140,21 @@ def Where(table: Table, constraints: tuple) -> Table:
     retTable.TableName = table.TableName
 
     fieldName = []
-    tableCache = []
     for field in table.TableField:
         fieldName.append(field.FieldName)
     for rows in table.TableData:
         line = dict()
         for i in range(len(fieldName)):
             line[fieldName[i]] = rows[i]
-        tableCache.append(line)
-
-    for l in tableCache:
-        if(constraints(l) == True):
+        if(constraints(line) == True):
             col = []
             for fname in fieldName:
-                col.append(l[fname])
+                col.append(line[fname])
             retTable.TableData.append(tuple(col))
     return retTable
 
 
-def Select(table: Table, fieldList: list):
+def Select(table: Table, fieldList: list) -> Table:
     """
     Get cols from `table` where fieldName in `fieldList`\n
     `fieldList` should be a list consists of string or '*'\n
@@ -182,6 +178,41 @@ def Select(table: Table, fieldList: list):
             rowCache.append(row[i])
         retTable.TableData.append(tuple(rowCache))
     return retTable
+
+
+def Insert(table: Table, row: tuple) -> Table:
+    """
+    Insert `row` into `table`
+    TODO : Datatype Check
+    """
+    if(len(table.TableField) == len(row)):
+        table.TableData.append(row)
+        return table
+    else:
+        print("Error: 插入数据与属性个数不符")
+        return None
+
+
+def Delete(table: Table, constraints: tuple) -> Table:
+    # TODO : Need to refactor
+    """
+    Delete rows from `table` where rows fit `constraints`\n
+    `constraints` should be a lambda expression\n
+    Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
+    """
+    fieldName = []
+    delIndex = []
+    for field in table.TableField:
+        fieldName.append(field.FieldName)
+    for i in range(len(table.TableData)):
+        line = dict()
+        for j in range(len(fieldName)):
+            line[fieldName[j]] = table.TableData[i][j]
+        if(constraints(line) == True):
+            delIndex.append(i)
+    for i in delIndex:
+        table.TableData.pop(i)
+    return table
 
 
 def PrintTable(table: Table) -> None:
@@ -232,6 +263,8 @@ def _Test():
 
     PrintTable(Where(table_2, lambda line: line['Score'] > 90))
     PrintTable(Select(table_1, ['No', 'Name']))
+    PrintTable(Delete(table_2, lambda line: line['Score'] < 90))
+    PrintTable(table_2)
 
     SaveFile(db)
     CloseFile()
