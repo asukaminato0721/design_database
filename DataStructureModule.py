@@ -57,8 +57,10 @@ Database: list = []
 
 # ======================== Global variable end ========================
 
-# Open and Read Database File
 def OpenFile(filePath: str) -> int:
+    """
+    Open and Read Database File
+    """
     global DBFileHandle, Database
     try:
         DBFileHandle = open(filePath, 'rb+')
@@ -71,6 +73,9 @@ def OpenFile(filePath: str) -> int:
 
 
 def SaveFile() -> int:
+    """
+    Save DataBase File
+    """
     if(DBFileHandle == None):
         print("Error: 尚未打开文件")
         return 1
@@ -78,32 +83,66 @@ def SaveFile() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    OpenFile('database.db')
-    print(Database)
+def CrossJoin(*tables: Table) -> Table:
+    """
+    Calculating Cartesian product
+    """
+    retTable = tables[0]
+    for t in tables[1:]:
+        retTable.TableName += t.TableName
+        retTable.TableField += t.TableField
+        rowsBuff = []
+        for col1 in retTable.TableData:
+            for col2 in t.TableData:
+                rowsBuff.append(col1+col2)
+        retTable.TableData = rowsBuff
+    return retTable
 
-    Database = [Table('Student',
-                      [
-                          Field('Name', DataType.TEXT, False, True),
-                          Field('No', DataType.INTERGER, True, False),
-                          Field('Gender', DataType.TEXT, False, True)
-                      ],
-                      [
-                          ('ZhangSan', 10011, 'M'),
-                          ('LiSi', 10012, 'M'),
-                          ('WangWu', 10013, 'F')
-                      ]
-                      ),
-                Table('Score',
-                      [
-                          Field('No', DataType.INTERGER, True, False),
-                          Field('Score', DataType.INTERGER, False, True)
-                      ],
-                      [
-                          (10011, 89),
-                          (10012, 92),
-                          (10013, 99)
-                      ]
-                      )
-                ]
-    SaveFile()
+
+def PrintTable(table: Table) -> None:
+    """
+    Print Table
+    """
+    for c in table.TableField:
+        print(c.FieldName, end='\t')
+    print()
+    for r in table.TableData:
+        for rc in r:
+            print(rc, end='\t')
+        print()
+    print()
+    return
+
+
+def _Test():
+    OpenFile('database.db')
+    table_1 = Table('Student',
+                    [
+                        Field('Name', DataType.TEXT, False, True),
+                        Field('No', DataType.INTERGER, True, False),
+                        Field('Gender', DataType.TEXT, False, True)
+                    ],
+                    [
+                        ('Mike', 10011, 'M'),
+                        ('Louise', 10012, 'M'),
+                        ('Monika', 10013, 'F')
+                    ]
+                    )
+    table_2 = Table('Score',
+                    [
+                        Field('No', DataType.INTERGER, True, False),
+                        Field('Score', DataType.INTERGER, False, True)
+                    ],
+                    [
+                        (10011, 89),
+                        (10012, 92),
+                        (10013, 99)
+                    ]
+                    )
+    PrintTable(table_1)
+    PrintTable(table_2)
+    PrintTable(CrossJoin(table_1, table_2))
+
+
+if __name__ == "__main__":
+    _Test()
