@@ -7,8 +7,8 @@ from django.http import HttpResponse, HttpRequest
 def show(request: HttpRequest) -> HttpResponse:
     all_tables = {
         "test": [
-            {"id": 1, "item": 123},
-            {"id": 2, "item": 237},
+            {"id": 1, "item": 123, "notnull": None},
+            {"id": 2, "item": 237, "notnull": "str"},
         ],
         "test1": [
             {"idx": 1, "item": 123},
