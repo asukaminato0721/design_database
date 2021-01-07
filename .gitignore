@@ -130,3 +130,6 @@ dmypy.json
 
 # VScode Stuff
 tempCodeRunnerFile.py
+
+# idea
+.idea/
