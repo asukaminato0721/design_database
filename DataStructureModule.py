@@ -1,21 +1,18 @@
 # 本模块定义了数据结构，并实现查询、删除、增加、修改等功能
+import time
 import pickle
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import List
 
 # ======================== Const definition ========================
-# MAX Table Name length (bytes)
-MAX_TABLE_NAME_LEN = 64
-# MAX Field length (bytes)
-MAX_FIELD_NAME_LEN = 32
-MAX_FIELD_TYPE_LEN = 4
-MAX_FIELD_TAGS_LEN = 4
+FILE_PATH = 'database.db'
+
 
 # ======================== Const definition end ========================
 
-
 # ======================== Class definition ========================
+
 
 class DataType(Enum):
     # Binary Data (no size limits)
@@ -49,45 +46,38 @@ class Table:
 
 
 # ======================== Global variable ========================
-# Database file handle
-DBFileHandle: object = None
+
 
 # ======================== Global variable end ========================
 
 
-def OpenFile(filePath: str) -> list:
+def ReadFile(filePath: str) -> list:
     """
     Open and Read Database File from `filePath` and return database object
     """
-    global DBFileHandle
     try:
-        DBFileHandle = open(filePath, 'rb+')
+        DBFileHandle = open(filePath, 'rb')
     except:
         print("Error: 没有找到文件或读取文件失败")
         return None
     else:
         Database = pickle.load(DBFileHandle)
+        DBFileHandle.close()
         return Database
 
 
-def SaveFile(database: list) -> int:
+def SaveFile(filePath: str, database: list) -> int:
     """
-    Save `database` from memory to file 
+    Save `database` from memory to file
     """
-    global DBFileHandle
-    if(DBFileHandle == None):
-        print("Error: 尚未打开文件")
-        return 1
+    try:
+        DBFileHandle = open(filePath, 'wb')
+    except:
+        print("Error: 没有找到文件或读取文件失败")
+        return None
     pickle.dump(database, DBFileHandle)
-    return 0
-
-
-def CloseFile() -> None:
-    """
-    Close the Database file
-    """
-    global DBFileHandle
     DBFileHandle.close()
+    return 0
 
 
 def From(*tables: Table) -> Table:
@@ -219,20 +209,20 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
-    print('Table Name : '+table.TableName)
+    print('[Table : %s]' % table.TableName)
     for cols in table.TableField:
-        print(cols.FieldName, end='\t')
+        print("%12.10s" % cols.FieldName, end='')
     print()
     for rows in table.TableData:
         for data in rows:
-            print(data, end='\t')
+            print("%12.10s" % str(data), end='')
         print()
     print()
     return
 
 
 def _Test():
-    db = OpenFile('database.db')
+    db = ReadFile(FILE_PATH)
     table_1 = Table('Student',
                     [
                         Field('Name', DataType.TEXT, False, True),
@@ -249,6 +239,7 @@ def _Test():
                         ('Bill', 10017, 'F'),
                         ('Alex', 10018, 'M'),
                         ('Jeb', 10019, 'F'),
+                        ('Max', 10020, 'M'),
                     ]
                     )
     table_2 = Table('Score',
@@ -266,15 +257,17 @@ def _Test():
                         (10017, 87),
                         (10018, 80),
                         (10019, 91),
+                        (10020, 100),
                     ]
                     )
 
     db = [table_1, table_2]
 
-    #PrintTable(Where(table_2, lambda line: line['Score'] > 90))
-    #PrintTable(Select(table_1, ['No', 'Name']))
+    # PrintTable(Where(table_2, lambda line: line['Score'] > 90))
+    # PrintTable(Select(table_1, ['No', 'Name']))
 
     # SELECT * FROM table_1, table_2 WHERE Student.No=Score.No AND Score.Score>=60
+
     PrintTable(Where(From(table_1, table_2),
                      lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60))
 
@@ -283,8 +276,8 @@ def _Test():
     # INSERT INTO table_2 values (20012,59)
     PrintTable(Insert(table_2, (20012, 59)))
 
-    SaveFile(db)
-    CloseFile()
+    SaveFile(FILE_PATH, db)
+    pass
 
 
 if __name__ == "__main__":
