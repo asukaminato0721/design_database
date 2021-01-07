@@ -18,7 +18,26 @@
       </div>
       <button type="submit" class="btn btn-primary">提交</button>
     </form>
-    {{query_cmd}}
+    {{query_cmd}} {%if is_valid %}
+    <table class="table">
+      <thead>
+        <tr>
+          {% for heading in headings %}
+          <th>{{heading}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in values %}
+        <tr class="table-success">
+          {% for item in line%}
+          <td>{{ item }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
   </div>
   <div class="col-md-2"></div>
 </div>
