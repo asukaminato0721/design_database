@@ -6,8 +6,9 @@ using namespace std;
 class ExchangeData;
 class Table;
 class Field;
-
-const struct Datatype
+// https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
+// 根据这个链接，const 可以删
+struct Datatype
 {
 	uint32_t id;
 	uint32_t size;
