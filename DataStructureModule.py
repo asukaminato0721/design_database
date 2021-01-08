@@ -13,7 +13,6 @@ FILE_PATH = 'database.db'
 
 # ======================== Class definition ========================
 
-
 class DataType(Enum):
     # Binary Data (no size limits)
     BIN = 0
@@ -176,7 +175,13 @@ def Insert(table: Table, row: tuple) -> Table:
     Insert `row` into `table`
     """
     if(len(table.TableField) == len(row)):
+        pkIndex = 0
+        for f in table.TableField:
+            if f.FieldIsPK == True:
+                pkIndex = table.TableField.index(f)
+
         table.TableData.append(row)
+        table.TableData.sort(key=lambda tup: tup[pkIndex])
         return table
     else:
         print("Error: 插入数据与属性个数不符")
@@ -263,17 +268,19 @@ def _Test():
 
     db = [table_1, table_2]
 
-    # PrintTable(Where(table_2, lambda line: line['Score'] > 90))
-    # PrintTable(Select(table_1, ['No', 'Name']))
+    # DML
 
-    # SELECT * FROM table_1, table_2 WHERE Student.No=Score.No AND Score.Score>=60
+    # SELECT Name,Score,No FROM Student,Score WHERE Student.No=Score.No and Score.Score>=60
 
-    PrintTable(Where(From(table_1, table_2),
-                     lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60))
+    PrintTable(table_1)
+    PrintTable(table_2)
+    PrintTable(Select(Where(From(table_1, table_2),
+                            lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60), ['Student.No', 'Student.Name', 'Score.Score']))
 
     # DELETE FROM table_2 WHERE table_2.Score < 90
     PrintTable(Delete(table_2, lambda line: line['Score'] < 90))
-    # INSERT INTO table_2 values (20012,59)
+
+    # INSERT INTO table_2 VALUES (20012,59)
     PrintTable(Insert(table_2, (20012, 59)))
 
     SaveFile(FILE_PATH, db)

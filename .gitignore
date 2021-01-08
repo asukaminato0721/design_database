@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Visual Studio Stuff
+AzuSQL/.vs/
+AzuSQL/Debug/
+AzuSQL/Release/
+AzuSQL/x64/
+
 # C extensions
 *.so
 
