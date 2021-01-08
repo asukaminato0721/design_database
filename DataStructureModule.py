@@ -242,17 +242,16 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
-    print('[Table : %s]' % table.TableName)
+    print(f'[Table : {table.TableName}]' )
     for cols in table.TableField:
-        print("%12.10s" % cols.FieldName, end='')
+        print(f"{cols.FieldName:>14}" , end='')
     print()
     for rows in table.TableData:
         for data in rows:
-            print("%12.10s" % str(data), end='')
+            print(f"{data:>14}", end='')
         print()
     print()
     return
-
 
 def _Test():
     db = ReadFile(FILE_PATH)
