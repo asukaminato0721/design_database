@@ -14,20 +14,20 @@ struct Datatype
 	uint32_t size;
 };
 const Datatype INT = { 1, 4 };
-const Datatype FLOAT = { 3, 4 };
+const Datatype FLOAT = { 3, 8 };
 const Datatype CHAR = { 10, 1 };
 const Datatype BYTE = { 11, 1 };
 
 
 void LogInfo(string msg, uint8_t level) {
 	if (level < 5) {
-		printf("Info( level=%d ) : %s\n", level, msg);
+		printf("Info( level=%d ) : %s\n", level, msg.c_str());
 	}
 	if (level < 10) {
-		printf("Warning( level=%d ) : %s\n", level, msg);
+		printf("Warning( level=%d ) : %s\n", level, msg.c_str());
 	}
 	else {
-		printf("Error( level=%d ) : %s\n", level, msg);
+		printf("Error( level=%d ) : %s\n", level, msg.c_str());
 	}
 }
 
@@ -63,13 +63,13 @@ class Field
 {
 public:
 	Field(char* fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
-		strcpy(this->FieldName, fieldName);
+		this->FieldName = fieldName;
 		this->FieldType = fieldType;
 		if (fieldType.id == CHAR.id || fieldType.id == BYTE.id) {
 			this->FieldSize = length;
 		}
 		else {
-			this->FieldSize = 4;
+			this->FieldSize = fieldType.size;
 		}
 		if ((FieldProperty & FIELD_PROPERTY_PK) != 0) {
 			FieldProperty = FieldProperty | FIELD_PROPERTY_NOT_NULL;
@@ -77,12 +77,12 @@ public:
 		this->FieldProperty = FieldProperty;
 	}
 	Field(Field* f) {
-		strcpy(this->FieldName, f->FieldName);
+		this->FieldName = f->FieldName;
 		this->FieldProperty = f->FieldProperty;
 		this->FieldSize = f->FieldSize;
 		this->FieldType = f->FieldType;
 	}
-	char FieldName[MAX_TABLE_NAME_LEN];
+	string FieldName;
 	Datatype FieldType = INT;
 	uint32_t FieldProperty = 0;
 	uint32_t FieldSize = 1;
@@ -110,6 +110,7 @@ public:
 
 	string TableName;
 	Field* TableField[MAX_FIELD_NUMBER];
+	map<string, Field*> FieldMap = map<string, Field*>();
 	uint32_t TableFieldNum = 0;
 	uint32_t TableRowSize = 0;
 	vector<uint8_t*> Data = vector<uint8_t*>();
@@ -148,6 +149,7 @@ public:
 			this->TableRowSize += f->FieldSize;
 			TableFieldNum++;
 			this->initCache();
+			FieldMap[f->FieldName] = f;
 			return;
 		}
 	}
@@ -157,7 +159,7 @@ public:
 	/// <param name="index">待转化的行</param>
 	/// <returns>交换格式</returns>
 	ExchangeData* MakeExchangeData(uint64_t index) {
-		if (index > this->Data.size()) {
+		if (index >= this->Data.size()) {
 			LogInfo("Index out of range.", 8);
 			return nullptr;
 		}
@@ -237,6 +239,48 @@ Table* Insert(Table* pTable, uint8_t* data) {
 	return pTable;
 }
 
+Table* Insert(Table* pTable, vector<string> fieldNameList, vector<string> valuesList) {
+	if (valuesList.size() != fieldNameList.size()) {
+		LogInfo("Field number and Values number not match.", 8);
+		return nullptr;
+	}
+	uint8_t* buff = (uint8_t*)malloc(pTable->TableRowSize);
+	if (buff == NULL) {
+		LogInfo("Unable to allocate memory", 12);
+		return nullptr;
+	}
+	memset(buff, 0, pTable->TableRowSize);
+	for (uint32_t i = 0; i < fieldNameList.size(); ++i) {
+		auto iter = pTable->FieldMap.find(fieldNameList[i]);
+		if (iter == pTable->FieldMap.end()) {
+			LogInfo("Can not find such Field", 9);
+			return nullptr;
+		}
+		auto type = iter->second->FieldType.id;
+		auto offset = iter->second->Offset;
+		auto length = iter->second->FieldSize;
+		if (type == INT.id) {
+			int value = atoi(valuesList[i].c_str());
+			memcpy(buff + offset, &value, length);
+		}
+		else if (type == FLOAT.id)
+		{
+			double value = atof(valuesList[i].c_str());
+			memcpy(buff + offset, &value, length);
+		}
+		else if (type == CHAR.id || type == BYTE.id) {
+			memcpy(buff + offset, (uint8_t*)valuesList[i].c_str(), length);
+		}
+		else {
+			LogInfo("Field type unknown.", 15);
+			return nullptr;
+		}
+	}
+	Insert(pTable, buff);
+	free(buff);
+	return pTable;
+}
+
 /// <summary>
 /// 笛卡尔积
 /// </summary>
@@ -263,9 +307,7 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 			return nullptr;
 		}
 
-		strcpy(f->FieldName, firstTable->TableName.c_str());
-		strcat(f->FieldName, (char*)".");
-		strcat(f->FieldName, firstTable->TableField[i]->FieldName);
+		f->FieldName = firstTable->TableName + "." + firstTable->TableField[i]->FieldName;
 		f->FieldProperty = firstTable->TableField[i]->FieldProperty;
 		f->FieldSize = firstTable->TableField[i]->FieldSize;
 		f->FieldType = firstTable->TableField[i]->FieldType;
@@ -306,9 +348,7 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 				LogInfo("Unable to allocate memory", 12);
 				return nullptr;
 			}
-			strcpy(f->FieldName, tableBuffer->TableName.c_str());
-			strcat(f->FieldName, (char*)".");
-			strcat(f->FieldName, tableBuffer->TableField[i]->FieldName);
+			f->FieldName = tableBuffer->TableName + "." + tableBuffer->TableField[i]->FieldName;
 			f->FieldProperty = tableBuffer->TableField[i]->FieldProperty;
 			f->FieldSize = tableBuffer->TableField[i]->FieldSize;
 			f->FieldType = tableBuffer->TableField[i]->FieldType;
@@ -370,7 +410,7 @@ Table* Select(const Table* pTable, vector<string> fieldNames) {
 
 	for (uint32_t i = 0; i < fieldNames.size(); ++i) {
 		for (uint32_t j = 0; j < pTable->TableFieldNum; ++j) {
-			if (strcmp(fieldNames[i].c_str(), pTable->TableField[j]->FieldName) == 0) {
+			if (fieldNames[i] == pTable->TableField[j]->FieldName) {
 				begin.push_back(pTable->TableField[j]->Offset);
 				length.push_back(pTable->TableField[j]->FieldSize);
 
@@ -379,9 +419,6 @@ Table* Select(const Table* pTable, vector<string> fieldNames) {
 				break;
 			}
 		}
-	}
-	for (uint32_t f = 0; f < retTable->TableFieldNum; ++f) {
-		
 	}
 	uint8_t* buff = (uint8_t*)malloc(retTable->TableRowSize);
 	if (buff == NULL) {
@@ -418,90 +455,23 @@ int main() {
 	studentTable->AddField(new Field((char*)"Gender", CHAR, 1, FIELD_PROPERTY_DEFAULT));
 	studentTable->AddField(new Field((char*)"Grade", INT, 1, FIELD_PROPERTY_DEFAULT));
 
-	uint8_t* studentRow = (uint8_t*)calloc(1, studentTable->TableRowSize);
-	int no = 10011;
-	int age = 21;
-	uint8_t gender = 'M';
-	int grade = 3;
-	if (studentRow != NULL) {
-
-		memcpy(studentRow + studentTable->TableField[0]->Offset, "Azura", studentTable->TableField[0]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[2]->Offset, &age, studentTable->TableField[2]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[3]->Offset, &gender, studentTable->TableField[3]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[4]->Offset, &grade, studentTable->TableField[4]->FieldSize);
-		Insert(studentTable, studentRow);
-	}
-	if (studentRow != NULL) {
-		no = 10012;
-		age = 20;
-		gender = 'F';
-		grade = 3;
-		memcpy(studentRow + studentTable->TableField[0]->Offset, "Bob", studentTable->TableField[0]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[2]->Offset, &age, studentTable->TableField[2]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[3]->Offset, &gender, studentTable->TableField[3]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[4]->Offset, &grade, studentTable->TableField[4]->FieldSize);
-		Insert(studentTable, studentRow);
-	}
-	if (studentRow != NULL) {
-		no = 10013;
-		age = 22;
-		gender = 'M';
-		grade = 3;
-		memcpy(studentRow + studentTable->TableField[0]->Offset, "Mike", studentTable->TableField[0]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[2]->Offset, &age, studentTable->TableField[2]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[3]->Offset, &gender, studentTable->TableField[3]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[4]->Offset, &grade, studentTable->TableField[4]->FieldSize);
-		Insert(studentTable, studentRow);
-	}
-	if (studentRow != NULL) {
-		no = 10014;
-		age = 20;
-		gender = 'F';
-		grade = 3;
-		memcpy(studentRow + studentTable->TableField[0]->Offset, "Monika", studentTable->TableField[0]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[2]->Offset, &age, studentTable->TableField[2]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[3]->Offset, &gender, studentTable->TableField[3]->FieldSize);
-		memcpy(studentRow + studentTable->TableField[4]->Offset, &grade, studentTable->TableField[4]->FieldSize);
-		Insert(studentTable, studentRow);
-	}
-
 	Table* scoreTable = new Table((char*)"Score");
+	scoreTable->AddField(new Field((char*)"Point", FLOAT, 1, FIELD_PROPERTY_DEFAULT));
 	scoreTable->AddField(new Field((char*)"Score", INT, 1, FIELD_PROPERTY_DEFAULT));
 	scoreTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
 
-	uint8_t* scoreRow = (uint8_t*)malloc(scoreTable->TableRowSize);
-	if (scoreRow != NULL) {
-		int grade = 98;
-		int no = 10011;
-		memcpy(scoreRow + scoreTable->TableField[0]->Offset, &grade, scoreTable->TableField[0]->FieldSize);
-		memcpy(scoreRow + scoreTable->TableField[1]->Offset, &no, scoreTable->TableField[1]->FieldSize);
-		Insert(scoreTable, scoreRow);
-	}
-	if (scoreRow != NULL) {
-		int grade = 94;
-		int no = 10012;
-		memcpy(scoreRow + scoreTable->TableField[0]->Offset, &grade, scoreTable->TableField[0]->FieldSize);
-		memcpy(scoreRow + scoreTable->TableField[1]->Offset, &no, scoreTable->TableField[1]->FieldSize);
-		Insert(scoreTable, scoreRow);
-	}
-	if (scoreRow != NULL) {
-		int grade = 32;
-		int no = 10013;
-		memcpy(scoreRow + scoreTable->TableField[0]->Offset, &grade, scoreTable->TableField[0]->FieldSize);
-		memcpy(scoreRow + scoreTable->TableField[1]->Offset, &no, scoreTable->TableField[1]->FieldSize);
-		Insert(scoreTable, scoreRow);
-	}
-	if (scoreRow != NULL) {
-		int grade = 99;
-		int no = 10014;
-		memcpy(scoreRow + scoreTable->TableField[0]->Offset, &grade, scoreTable->TableField[0]->FieldSize);
-		memcpy(scoreRow + scoreTable->TableField[1]->Offset, &no, scoreTable->TableField[1]->FieldSize);
-		Insert(scoreTable, scoreRow);
-	}
+	Insert(studentTable, { "Name", "No",  "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
+	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Azura", "20011", "20", "M", "3" });
+	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Monika", "20012", "20", "F", "3" });
+	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
+	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
+
+
+	Insert(scoreTable, { "Score", "No","Point" }, { "98", "20010","3.5" });
+	Insert(scoreTable, { "Score","Point", "No" }, { "99","4.5", "20011" });
+	Insert(scoreTable, { "Score", "No" }, { "59", "20012" });
+	Insert(scoreTable, { "Score", "No" }, { "53", "20013" });
+	Insert(scoreTable, { "Score", "No" }, { "97", "20014" });
 
 
 	auto start = clock();
@@ -513,7 +483,6 @@ int main() {
 		//delete crossJoin;
 		//crossJoin = From(2, ls);
 
-		no++;
 		//memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
 
 		//studentTable->Insert(studentRow);
@@ -523,8 +492,10 @@ int main() {
 	printf("Time Cost %lf ms \n", (double)(end - start) / times);
 
 
-	ls[0]->Print();
-	ls[1]->Print();
+
+
+	studentTable->Print();
+	scoreTable->Print();
 	crossJoin = From(2, ls);
 	crossJoin->Print();
 	auto Scores = Where(crossJoin, __connect_on_no);
