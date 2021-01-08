@@ -210,6 +210,34 @@ def Delete(table: Table, constraints) -> Table:
     return table
 
 
+def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
+    """
+    Update `table` set field1=value1,field2=value2,... where fields fit `constraints`\n
+    `constraints` should be a lambda expresssion\n
+    Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
+    """
+    fieldName = []
+    rowsData = []
+    for field in table.TableField:
+        fieldName.append(field.FieldName)
+
+    for tableRow in table.TableData:
+        line = dict()
+        for fName in fieldName:
+            line[fName] = tableRow[fieldName.index(fName)]
+        if(constraints(line) == False):
+            rowsData.append(tableRow)
+        else:
+            cnt = 0
+            for fName in fieldlist:
+                temp = list(tableRow)
+                temp[fieldName.index(fName)] = valuelist[cnt]
+                cnt = cnt+1
+            rowsData.append(tuple(temp))
+    table.TableData = rowsData
+    return table
+
+
 def PrintTable(table: Table) -> None:
     """
     Print `table`
@@ -282,6 +310,10 @@ def _Test():
 
     # INSERT INTO table_2 VALUES (20012,59)
     PrintTable(Insert(table_2, (20012, 59)))
+
+    # UPDATE table_2 SET SCORE='100' WHERE No='10011'
+    PrintTable(Update(table_2, ['Score'], [100],
+                      lambda line: line['No'] == 10019))
 
     SaveFile(FILE_PATH, db)
     pass
