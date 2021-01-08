@@ -184,10 +184,10 @@ public:
 		return this;
 	}
 
-	void Print() {
+	const void Print() {
 		printf("========================================================\n");
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			printf("%-15s", this->TableField[i]->FieldName);
+			printf("%-15s", this->TableField[i]->FieldName.c_str());
 		}
 		printf("\n");
 		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
@@ -209,7 +209,7 @@ public:
 						printf("%-15d", *(int*)buff);
 					}
 					else if (fieldTypeID == FLOAT.id) {
-						printf("%-15f", *(float*)buff);
+						printf("%-15lf", *(double*)buff);
 					}
 					else if (fieldTypeID == CHAR.id) {
 						printf("%-15s\t\t", buff);
@@ -239,7 +239,7 @@ Table* Insert(Table* pTable, uint8_t* data) {
 	return pTable;
 }
 
-Table* Insert(Table* pTable, vector<string> fieldNameList, vector<string> valuesList) {
+Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<string> valuesList) {
 	if (valuesList.size() != fieldNameList.size()) {
 		LogInfo("Field number and Values number not match.", 8);
 		return nullptr;
@@ -404,7 +404,7 @@ Table* Delete(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
 /// </summary>
 /// <param name="fieldNames">属性名列表</param>
 /// <returns>投影后的结果</returns>
-Table* Select(const Table* pTable, vector<string> fieldNames) {
+Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	Table* retTable = new Table();
 	vector<uint32_t> begin, length;
 
@@ -449,6 +449,9 @@ bool __connect_on_no(ExchangeData* ex) {
 
 int main() {
 	Table* studentTable = new Table((char*)"Students");
+
+
+
 	studentTable->AddField(new Field((char*)"Name", CHAR, 32, FIELD_PROPERTY_DEFAULT));
 	studentTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
 	studentTable->AddField(new Field((char*)"Age", INT, 1, FIELD_PROPERTY_DEFAULT));
@@ -468,8 +471,8 @@ int main() {
 
 
 	Insert(scoreTable, { "Score", "No","Point" }, { "98", "20010","3.5" });
-	Insert(scoreTable, { "Score","Point", "No" }, { "99","4.5", "20011" });
-	Insert(scoreTable, { "Score", "No" }, { "59", "20012" });
+	Insert(scoreTable, { "Score","Point", "No" }, { "99", "4.5", "20011" });
+	Insert(scoreTable, { "Point","Score", "No" }, { "3.7", "59", "20012" });
 	Insert(scoreTable, { "Score", "No" }, { "53", "20013" });
 	Insert(scoreTable, { "Score", "No" }, { "97", "20014" });
 
