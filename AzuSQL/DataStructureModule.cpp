@@ -108,7 +108,7 @@ public:
 		}
 	}
 
-	char TableName[MAX_TABLE_NAME_LEN];
+	string TableName;
 	Field* TableField[MAX_FIELD_NUMBER];
 	uint32_t TableFieldNum = 0;
 	uint32_t TableRowSize = 0;
@@ -119,7 +119,7 @@ public:
 		return;
 	}
 	Table(char* tableName) {
-		strcpy(this->TableName, tableName);
+		this->TableName = tableName;
 		memset(this->TableField, 0, MAX_FIELD_NUMBER);
 	}
 	~Table() {
@@ -222,7 +222,7 @@ public:
 };
 
 /// <summary>
-/// 将数据插入表中
+/// 将数据插入表中（深拷贝）
 /// </summary>
 /// <param name="DataTuple">指向数据头的指针</param>
 /// <returns>返回该表</returns>
@@ -253,8 +253,8 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 		return nullptr;
 	}
 	//Table[0]
-	Table* firstTable = tables[0];
-	strcpy(retTable->TableName, firstTable->TableName);
+	const Table* firstTable = tables[0];
+	retTable->TableName.assign(firstTable->TableName);
 	//Field Merge
 	for (uint32_t i = 0; i < firstTable->TableFieldNum; ++i) {
 		Field* f = (Field*)calloc(1, sizeof(Field));
@@ -262,7 +262,8 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 			LogInfo("Unable to allocate memory", 12);
 			return nullptr;
 		}
-		strcpy(f->FieldName, firstTable->TableName);
+
+		strcpy(f->FieldName, firstTable->TableName.c_str());
 		strcat(f->FieldName, (char*)".");
 		strcat(f->FieldName, firstTable->TableField[i]->FieldName);
 		f->FieldProperty = firstTable->TableField[i]->FieldProperty;
@@ -276,9 +277,9 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 	}
 	//Table [1:]
 	for (uint8_t i = 1; i < tableNum; ++i) {
-		Table* tableBuffer = tables[i];
-		strcat(retTable->TableName, (char*)"&&");
-		strcat(retTable->TableName, tableBuffer->TableName);
+		const Table* tableBuffer = tables[i];
+		retTable->TableName += ("&&");
+		retTable->TableName.append(tableBuffer->TableName);
 		//Data Merge
 		vector<uint8_t*> dataRows = vector<uint8_t*>();
 		uint32_t datasize = retTable->TableRowSize + tableBuffer->TableRowSize;
@@ -305,7 +306,7 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 				LogInfo("Unable to allocate memory", 12);
 				return nullptr;
 			}
-			strcpy(f->FieldName, tableBuffer->TableName);
+			strcpy(f->FieldName, tableBuffer->TableName.c_str());
 			strcat(f->FieldName, (char*)".");
 			strcat(f->FieldName, tableBuffer->TableField[i]->FieldName);
 			f->FieldProperty = tableBuffer->TableField[i]->FieldProperty;
@@ -363,9 +364,38 @@ Table* Delete(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
 /// </summary>
 /// <param name="fieldNames">属性名列表</param>
 /// <returns>投影后的结果</returns>
-Table* Select(vector<string> fieldNames) {
+Table* Select(const Table* pTable, vector<string> fieldNames) {
 	Table* retTable = new Table();
-	return nullptr;
+	for (uint32_t i = 0; i < fieldNames.size(); ++i) {
+		for (uint32_t j = 0; j < pTable->TableFieldNum; ++j) {
+			if (strcmp(fieldNames[i].c_str(), pTable->TableField[j]->FieldName) == 0) {
+				auto pField = new Field(pTable->TableField[j]);
+				retTable->AddField(pField);
+				break;
+			}
+		}
+	}
+	vector<uint32_t> begin, length;
+	for (uint32_t f = 0; f < retTable->TableFieldNum; ++f) {
+		begin.push_back(retTable->TableField[f]->Offset);
+		length.push_back(retTable->TableField[f]->FieldSize);
+	}
+	uint8_t* buff = (uint8_t*)malloc(retTable->TableRowSize);
+	if (buff == NULL) {
+		LogInfo("Unable to allocate memory", 12);
+		return nullptr;
+	}
+	uint32_t offset;
+	for (uint64_t row = 0; row < pTable->Data.size(); ++row) {
+		offset = 0;
+		for (uint32_t f = 0; f < begin.size(); ++f) {
+			memcpy(buff + offset, pTable->Data[row] + begin[f], length[f]);
+			offset += length[f];
+		}
+		Insert(retTable, buff);
+	}
+	free(buff);
+	return retTable;
 }
 
 
@@ -497,6 +527,9 @@ int main() {
 	auto Scores = Where(crossJoin, __connect_on_no);
 	Scores->Print();
 
+	vector<string>vStu = { "Name", "No" };
+	auto selectTable = Select(studentTable, vStu);
+	selectTable->Print();
 	//crossJoin->DeleteData(1);
 	//crossJoin->Print();
 
