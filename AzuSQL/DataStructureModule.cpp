@@ -32,7 +32,7 @@ void LogInfo(string msg, uint8_t level) {
 }
 
 /// <summary>
-/// 数据交换格式，其中pData是引用
+/// 数据交换格式（pData是引用）
 /// </summary>
 class ExchangeData
 {
@@ -366,19 +366,22 @@ Table* Delete(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
 /// <returns>投影后的结果</returns>
 Table* Select(const Table* pTable, vector<string> fieldNames) {
 	Table* retTable = new Table();
+	vector<uint32_t> begin, length;
+
 	for (uint32_t i = 0; i < fieldNames.size(); ++i) {
 		for (uint32_t j = 0; j < pTable->TableFieldNum; ++j) {
 			if (strcmp(fieldNames[i].c_str(), pTable->TableField[j]->FieldName) == 0) {
+				begin.push_back(pTable->TableField[j]->Offset);
+				length.push_back(pTable->TableField[j]->FieldSize);
+
 				auto pField = new Field(pTable->TableField[j]);
 				retTable->AddField(pField);
 				break;
 			}
 		}
 	}
-	vector<uint32_t> begin, length;
 	for (uint32_t f = 0; f < retTable->TableFieldNum; ++f) {
-		begin.push_back(retTable->TableField[f]->Offset);
-		length.push_back(retTable->TableField[f]->FieldSize);
+		
 	}
 	uint8_t* buff = (uint8_t*)malloc(retTable->TableRowSize);
 	if (buff == NULL) {
@@ -467,7 +470,7 @@ int main() {
 	}
 
 	Table* scoreTable = new Table((char*)"Score");
-	scoreTable->AddField(new Field((char*)"Grade", INT, 1, FIELD_PROPERTY_DEFAULT));
+	scoreTable->AddField(new Field((char*)"Score", INT, 1, FIELD_PROPERTY_DEFAULT));
 	scoreTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
 
 	uint8_t* scoreRow = (uint8_t*)malloc(scoreTable->TableRowSize);
@@ -527,8 +530,8 @@ int main() {
 	auto Scores = Where(crossJoin, __connect_on_no);
 	Scores->Print();
 
-	vector<string>vStu = { "Name", "No" };
-	auto selectTable = Select(studentTable, vStu);
+	vector<string>vStu = { "Students.Name", "Students.No","Score.Score" };
+	auto selectTable = Select(Scores, vStu);
 	selectTable->Print();
 	//crossJoin->DeleteData(1);
 	//crossJoin->Print();
