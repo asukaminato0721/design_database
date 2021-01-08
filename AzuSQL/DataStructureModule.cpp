@@ -185,7 +185,7 @@ public:
 	void Print() {
 		printf("========================================================\n");
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			printf("[%s]\t", this->TableField[i]->FieldName);
+			printf("%-15s", this->TableField[i]->FieldName);
 		}
 		printf("\n");
 		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
@@ -201,16 +201,16 @@ public:
 					memcpy(buff, *iter + this->TableField[i]->Offset, this->TableField[i]->FieldSize);
 					if (fieldTypeID == CHAR.id)
 					{
-						printf("%s\t\t", (char*)buff);
+						printf("%-15s", (char*)buff);
 					}
 					else if (fieldTypeID == INT.id) {
-						printf("%d\t\t", *(int*)buff);
+						printf("%-15d", *(int*)buff);
 					}
 					else if (fieldTypeID == FLOAT.id) {
-						printf("%f\t\t", *(float*)buff);
+						printf("%-15f", *(float*)buff);
 					}
 					else if (fieldTypeID == CHAR.id) {
-						printf("%s\t\t", buff);
+						printf("%-15s\t\t", buff);
 					}
 				}
 			}
