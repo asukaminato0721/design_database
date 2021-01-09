@@ -10,7 +10,7 @@ class Field;
 // 根据这个链接，const 可以删
 struct Datatype
 {
-	uint32_t id;
+	uint8_t id;
 	uint32_t size;
 };
 const Datatype INT = { 1, 4 };
@@ -18,6 +18,7 @@ const Datatype FLOAT = { 3, 8 };
 const Datatype CHAR = { 10, 1 };
 const Datatype BYTE = { 11, 1 };
 
+typedef map<string, Table*> DB;
 
 void LogInfo(string msg, uint8_t level) {
 	if (level < 5) {
@@ -59,6 +60,8 @@ public:
 	}
 };
 
+//属性名+类型号+长度+标签
+#define FIELD_SIZE (MAX_FIELD_NAME_LEN+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
 class Field
 {
 public:
@@ -88,6 +91,9 @@ public:
 	uint32_t FieldSize = 1;
 	uint32_t Offset = 0;
 };
+
+//表名+属性数量+数据数量+数据长度
+#define TABLE_HEAD_SIZE (MAX_TABLE_NAME_LEN+sizeof(uint32_t)+sizeof(uint64_t)+sizeof(uint32_t))
 
 class Table
 {
@@ -171,6 +177,21 @@ public:
 		}
 		return ExData_Cache;
 	}
+	/// <summary>
+	/// 将数据插入表中（深拷贝）
+	/// </summary>
+	/// <param name="DataTuple">指向数据头的指针</param>
+	/// <returns>返回该表</returns>
+	Table* InsertData(uint8_t* data) {
+		uint8_t* pDataRow = (uint8_t*)calloc(this->TableRowSize, sizeof(uint8_t));
+		if (pDataRow == NULL) {
+			LogInfo("Unable to allocate memory", 12);
+			return nullptr;
+		}
+		memcpy(pDataRow, data, this->TableRowSize);
+		this->Data.push_back(pDataRow);
+		return this;
+	}
 
 	/// <summary>
 	/// 删除表中的数据
@@ -224,27 +245,18 @@ public:
 };
 
 /// <summary>
-/// 将数据插入表中（深拷贝）
+/// 向表中插入数据
 /// </summary>
-/// <param name="DataTuple">指向数据头的指针</param>
-/// <returns>返回该表</returns>
-Table* Insert(Table* pTable, uint8_t* data) {
-	uint8_t* pDataRow = (uint8_t*)calloc(pTable->TableRowSize, sizeof(uint8_t));
-	if (pDataRow == NULL) {
-		LogInfo("Unable to allocate memory", 12);
-		return nullptr;
-	}
-	memcpy(pDataRow, data, pTable->TableRowSize);
-	pTable->Data.push_back(pDataRow);
-	return pTable;
-}
-
+/// <param name="pTable">待插入的表</param>
+/// <param name="fieldNameList">列名（vector）</param>
+/// <param name="valuesList">值（vector）</param>
+/// <returns>插入后的表</returns>
 Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<string> valuesList) {
 	if (valuesList.size() != fieldNameList.size()) {
 		LogInfo("Field number and Values number not match.", 8);
 		return nullptr;
 	}
-	uint8_t* buff = (uint8_t*)malloc(pTable->TableRowSize);
+	uint8_t* buff = (uint8_t*)calloc(1, pTable->TableRowSize);
 	if (buff == NULL) {
 		LogInfo("Unable to allocate memory", 12);
 		return nullptr;
@@ -276,7 +288,7 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 			return nullptr;
 		}
 	}
-	Insert(pTable, buff);
+	pTable->InsertData(buff);
 	free(buff);
 	return pTable;
 }
@@ -287,8 +299,8 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 /// <param name="tableNum">参与运算的表数量</param>
 /// <param name="tables">参与运算的表指针</param>
 /// <returns>笛卡尔积结果</returns>
-Table* From(uint8_t tableNum, Table* tables[]) {
-	if (tableNum == 0) {
+Table* From(DB& pDatabase, vector<string> tableNameList) {
+	if (tableNameList.size() == 0) {
 		return nullptr;
 	}
 	Table* retTable = new Table();
@@ -297,7 +309,7 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 		return nullptr;
 	}
 	//Table[0]
-	const Table* firstTable = tables[0];
+	const Table* firstTable = pDatabase[tableNameList[0]];
 	retTable->TableName.assign(firstTable->TableName);
 	//Field Merge
 	for (uint32_t i = 0; i < firstTable->TableFieldNum; ++i) {
@@ -315,11 +327,11 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 	}
 	//Data Merge
 	for (auto iter = firstTable->Data.begin(); iter != firstTable->Data.end(); iter++) {
-		Insert(retTable, *iter);
+		retTable->InsertData(*iter);
 	}
 	//Table [1:]
-	for (uint8_t i = 1; i < tableNum; ++i) {
-		const Table* tableBuffer = tables[i];
+	for (uint8_t i = 1; i < tableNameList.size(); ++i) {
+		const Table* tableBuffer = pDatabase[tableNameList[i]];
 		retTable->TableName += ("&&");
 		retTable->TableName.append(tableBuffer->TableName);
 		//Data Merge
@@ -365,7 +377,7 @@ Table* From(uint8_t tableNum, Table* tables[]) {
 /// <param name="constraint">约束条件</param>
 /// <returns>查询结果</returns>
 Table* Where(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
-	//TODO this table has no name
+	//TODO this pTable has no name
 	Table* retTable = new Table();
 	for (uint32_t i = 0; i < pTable->TableFieldNum; ++i) {
 		Field* newField = new Field(pTable->TableField[i]);
@@ -374,7 +386,7 @@ Table* Where(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
 	for (uint64_t i = 0; i < pTable->Data.size(); ++i) {
 		pTable->MakeExchangeData(i);
 		if (constraint(pTable->ExData_Cache) == true) {
-			Insert(retTable, pTable->Data[i]);
+			retTable->InsertData(pTable->Data[i]);
 		}
 	}
 	return retTable;
@@ -432,13 +444,124 @@ Table* Select(const Table* pTable, const vector<string> fieldNames) {
 			memcpy(buff + offset, pTable->Data[row] + begin[f], length[f]);
 			offset += length[f];
 		}
-		Insert(retTable, buff);
+		retTable->InsertData(buff);
 	}
 	free(buff);
 	return retTable;
 }
 
+void StoreDatabase(string filePath, DB* database) {
+	ofstream fs;
+	fs.open(filePath, ios::out | ios::binary);
+	auto tableend = database->end();
+	for (auto iter = database->begin(); iter != tableend; ++iter)
+	{
+		const Table* table = iter->second;
+		uint8_t* buff = (uint8_t*)calloc(1, TABLE_HEAD_SIZE);
+		if (buff == NULL) {
+			LogInfo("Unable to allocate memory", 12);
+			return;
+		}
+		uint64_t rowNumber = table->Data.size();
+		//写入表名
+		strcpy((char*)buff, table->TableName.c_str());
+		//属性数量uint32_t
+		memcpy(buff + MAX_TABLE_NAME_LEN, &table->TableFieldNum, sizeof(table->TableFieldNum));
+		//行数uint64_t
+		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum), &rowNumber, sizeof(rowNumber));
+		//数据长度uint32_t
+		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum) + sizeof(rowNumber), &table->TableRowSize, sizeof(table->TableRowSize));
+		fs.write((const char*)buff, TABLE_HEAD_SIZE);
+		free(buff);
+		for (uint32_t i = 0; i < table->TableFieldNum; i++)
+		{
+			const Field* field = table->TableField[i];
+			uint8_t* buff = (uint8_t*)calloc(1, FIELD_SIZE);
+			if (buff == NULL) {
+				LogInfo("Unable to allocate memory", 12);
+				return;
+			}
+			//写入属性名
+			strcpy((char*)buff, field->FieldName.c_str());
+			//写入类型号uint8_t
+			memcpy(buff + MAX_FIELD_NAME_LEN, &field->FieldType.id, sizeof(field->FieldType.id));
+			//写入长度uint32_t
+			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id), &field->FieldSize, sizeof(field->FieldSize));
+			//写入标签uint32_t
+			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id) + sizeof(field->FieldSize), &field->FieldProperty, sizeof(field->FieldProperty));
+			fs.write((const char*)buff, FIELD_SIZE);
+			free(buff);
+		}
+		uint32_t rowSize = table->TableRowSize;
+		for (uint64_t i = 0; i < rowNumber; i++)
+		{
+			fs.write((const char*)table->Data[i], rowSize);
+		}
+	}
+	fs.close();
+}
 
+void LoadDatabase(string filePath, DB* database) {
+	ifstream fs;
+	fs.open(filePath, ios::in | ios::binary);
+	while (fs.peek() != EOF)
+	{
+		Table* pTable = new Table();
+		char pTableName[MAX_TABLE_NAME_LEN];
+		uint32_t TableFieldNum;
+		uint64_t RowNumber;
+		uint32_t RowSize;
+		//读取表名
+		fs.read(pTableName, MAX_TABLE_NAME_LEN);
+		pTable->TableName = pTableName;
+		//属性数量uint32_t
+		fs.read((char*)&TableFieldNum, sizeof(pTable->TableFieldNum));
+		//行数uint64_t
+		fs.read((char*)&RowNumber, sizeof(RowNumber));
+		//数据长度uint32_t
+		fs.read((char*)&RowSize, sizeof(RowSize));
+		for (uint32_t i = 0; i < TableFieldNum; i++)
+		{
+			char FieldName[MAX_FIELD_NAME_LEN];
+			uint8_t type = 0;
+			uint32_t FieldSize = 0;
+			uint32_t prop = 0;
+			const Datatype* datatype = nullptr;
+			//属性名
+			fs.read(FieldName, MAX_FIELD_NAME_LEN);
+			//类型号uint8_t
+			fs.read((char*)&type, sizeof(uint8_t));
+			if (type == INT.id) {
+				datatype = &INT;
+			}
+			else if (type == FLOAT.id) {
+				datatype = &FLOAT;
+			}
+			else if (type == CHAR.id) {
+				datatype = &CHAR;
+			}
+			else {
+				datatype = &BYTE;
+			}
+			//长度uint32_t
+			fs.read((char*)&FieldSize, sizeof(uint32_t));
+			//标签uint32_t
+			fs.read((char*)&prop, sizeof(uint32_t));
+
+			Field* pField = new Field(FieldName, *datatype, FieldSize / datatype->size, prop);
+			pTable->AddField(pField);
+		}
+		assert(RowSize == pTable->TableRowSize);
+		uint8_t* buff = (uint8_t*)malloc(RowSize);
+		for (uint64_t i = 0; i < RowNumber; i++)
+		{
+			fs.read((char*)buff, RowSize);
+			pTable->InsertData(buff);
+		}
+		free(buff);
+		(*database)[pTable->TableName] = pTable;
+	}
+}
 
 bool __connect_on_no(ExchangeData* ex) {
 	if (*(int*)(ex->Data("Students.No")) == *(int*)(ex->Data("Score.No"))) {
@@ -448,9 +571,10 @@ bool __connect_on_no(ExchangeData* ex) {
 }
 
 int main() {
+
+	DB database = DB();
+
 	Table* studentTable = new Table((char*)"Students");
-
-
 
 	studentTable->AddField(new Field((char*)"Name", CHAR, 32, FIELD_PROPERTY_DEFAULT));
 	studentTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
@@ -458,24 +582,32 @@ int main() {
 	studentTable->AddField(new Field((char*)"Gender", CHAR, 1, FIELD_PROPERTY_DEFAULT));
 	studentTable->AddField(new Field((char*)"Grade", INT, 1, FIELD_PROPERTY_DEFAULT));
 
-	Table* scoreTable = new Table((char*)"Score");
-	scoreTable->AddField(new Field((char*)"Point", FLOAT, 1, FIELD_PROPERTY_DEFAULT));
-	scoreTable->AddField(new Field((char*)"Score", INT, 1, FIELD_PROPERTY_DEFAULT));
-	scoreTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
-
 	Insert(studentTable, { "Name", "No",  "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
 	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Azura", "20011", "20", "M", "3" });
 	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Monika", "20012", "20", "F", "3" });
 	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
 	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
 
+	database[studentTable->TableName] = studentTable;
 
-	Insert(scoreTable, { "Score", "No","Point" }, { "98", "20010","3.5" });
-	Insert(scoreTable, { "Score","Point", "No" }, { "99", "4.5", "20011" });
-	Insert(scoreTable, { "Point","Score", "No" }, { "3.7", "59", "20012" });
-	Insert(scoreTable, { "Score", "No" }, { "53", "20013" });
-	Insert(scoreTable, { "Score", "No" }, { "97", "20014" });
+	Table* scoreTable = new Table((char*)"Score");
+	scoreTable->AddField(new Field((char*)"Point", FLOAT, 1, FIELD_PROPERTY_DEFAULT));
+	scoreTable->AddField(new Field((char*)"Mark", INT, 1, FIELD_PROPERTY_DEFAULT));
+	scoreTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
 
+	Insert(scoreTable, { "Mark", "No","Point" }, { "98", "20010","3.5" });
+	Insert(scoreTable, { "Mark","Point", "No" }, { "99", "4.5", "20011" });
+	Insert(scoreTable, { "Point","Mark", "No" }, { "3.7", "59", "20012" });
+	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
+	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
+
+	database[scoreTable->TableName] = scoreTable;
+
+	//StoreDatabase("TestDataBase.hex", &database);
+	//return 0;
+
+	DB Loaddb = DB();
+	LoadDatabase("TestDataBase.hex", &Loaddb);
 
 	auto start = clock();
 	Table* crossJoin = new Table();
@@ -488,27 +620,24 @@ int main() {
 
 		//memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
 
-		//studentTable->Insert(studentRow);
+		//studentTable->InsertData(studentRow);
 		//studentTable->DeleteData(0);
 	}
 	auto end = clock();
 	printf("Time Cost %lf ms \n", (double)(end - start) / times);
 
+	Loaddb["Students"]->Print();
+	Loaddb["Score"]->Print();
 
-
-
-	studentTable->Print();
-	scoreTable->Print();
-	crossJoin = From(2, ls);
+	crossJoin = From(Loaddb, { "Students","Score" });
 	crossJoin->Print();
-	auto Scores = Where(crossJoin, __connect_on_no);
+	auto Scores = Select(Where(crossJoin, __connect_on_no), { "Students.Name", "Students.No","Score.Score" });
 	Scores->Print();
 
-	vector<string>vStu = { "Students.Name", "Students.No","Score.Score" };
-	auto selectTable = Select(Scores, vStu);
-	selectTable->Print();
+
 	//crossJoin->DeleteData(1);
 	//crossJoin->Print();
+
 
 
 	auto ss = crossJoin->MakeExchangeData(0);
