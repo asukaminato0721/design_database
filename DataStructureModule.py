@@ -228,11 +228,9 @@ def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
         if(constraints(line) == False):
             rowsData.append(tableRow)
         else:
-            cnt = 0
+            temp = list(tableRow)
             for fName in fieldlist:
-                temp = list(tableRow)
-                temp[fieldName.index(fName)] = valuelist[cnt]
-                cnt = cnt+1
+                temp[fieldName.index(fName)] = valuelist[fieldlist.index(fName)]
             rowsData.append(tuple(temp))
     table.TableData = rowsData
     return table
