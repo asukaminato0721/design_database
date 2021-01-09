@@ -218,8 +218,11 @@ def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
     """
     fieldName = []
     rowsData = []
+    pkIndex = 0
     for field in table.TableField:
         fieldName.append(field.FieldName)
+        if field.FieldIsPK == True:
+            pkIndex = table.TableField.index(field)
 
     for tableRow in table.TableData:
         line = dict()
@@ -233,6 +236,7 @@ def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
                 temp[fieldName.index(fName)] = valuelist[fieldlist.index(fName)]
             rowsData.append(tuple(temp))
     table.TableData = rowsData
+    table.TableData.sort(key=lambda tup: tup[pkIndex])
     return table
 
 
@@ -240,9 +244,9 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
-    print(f'[Table : {table.TableName}]' )
+    print(f'[Table : {table.TableName}]')
     for cols in table.TableField:
-        print(f"{cols.FieldName:>14}" , end='')
+        print(f"{cols.FieldName:>14}", end='')
     print()
     for rows in table.TableData:
         for data in rows:
@@ -250,6 +254,7 @@ def PrintTable(table: Table) -> None:
         print()
     print()
     return
+
 
 def _Test():
     db = ReadFile(FILE_PATH)
@@ -308,8 +313,8 @@ def _Test():
     # INSERT INTO table_2 VALUES (20012,59)
     PrintTable(Insert(table_2, (20012, 59)))
 
-    # UPDATE table_2 SET SCORE='100' WHERE No='10011'
-    PrintTable(Update(table_2, ['Score'], [100],
+    # UPDATE table_2 SET No='20019',SCORE='100' WHERE No='10019'
+    PrintTable(Update(table_2, ['No', 'Score'], [20019, 100],
                       lambda line: line['No'] == 10019))
 
     SaveFile(FILE_PATH, db)
