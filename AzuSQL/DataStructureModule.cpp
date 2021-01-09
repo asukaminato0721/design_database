@@ -65,7 +65,7 @@ public:
 class Field
 {
 public:
-	Field(char* fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
+	Field(string fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
 		this->FieldName = fieldName;
 		this->FieldType = fieldType;
 		if (fieldType.id == CHAR.id || fieldType.id == BYTE.id) {
@@ -125,7 +125,7 @@ public:
 		memset(this->TableField, 0, MAX_FIELD_NUMBER);
 		return;
 	}
-	Table(char* tableName) {
+	Table(string tableName) {
 		this->TableName = tableName;
 		memset(this->TableField, 0, MAX_FIELD_NUMBER);
 	}
@@ -207,6 +207,7 @@ public:
 
 	const void Print() {
 		printf("========================================================\n");
+		printf("[Table Name : %s]\n", this->TableName.c_str());
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
 			printf("%-15s", this->TableField[i]->FieldName.c_str());
 		}
@@ -299,7 +300,14 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 /// <param name="tableNum">参与运算的表数量</param>
 /// <param name="tables">参与运算的表指针</param>
 /// <returns>笛卡尔积结果</returns>
-Table* From(DB& pDatabase, vector<string> tableNameList) {
+Table* From(DB& pDatabase, const vector<string>& tableNameList) {
+	for (size_t i = 0; i < tableNameList.size(); i++)
+	{
+		if (pDatabase.find(tableNameList[i]) == pDatabase.end()) {
+			LogInfo("Can not find such Table", 9);
+			return nullptr;
+		}
+	}
 	if (tableNameList.size() == 0) {
 		return nullptr;
 	}
@@ -450,6 +458,46 @@ Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	return retTable;
 }
 
+//"Name","CHAR",32,FIELD_PROPERTY_PK
+Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string, string, int, int>>& Fields) {
+	auto FieldNum = Fields.size();
+	if (FieldNum > MAX_FIELD_NUMBER) {
+		LogInfo("Field number exceed", 12);
+		return nullptr;
+	}
+
+	Table* pTable = new Table(tableName);
+	for (uint32_t i = 0; i < FieldNum; i++)
+	{
+		auto type = std::get<1>(Fields[i]);
+		const Datatype* ptype = nullptr;
+		if (type == "INT") {
+			ptype = &INT;
+		}
+		else if (type == "FLOAT") {
+			ptype = &FLOAT;
+
+		}
+		else if (type == "CHAR")
+		{
+			ptype = &CHAR;
+		}
+		else if (type == "BYTE")
+		{
+			ptype = &BYTE;
+		}
+		else
+		{
+			LogInfo("Unknown data type.", 14);
+			return nullptr;
+		}
+		Field* pField = new Field(std::get<0>(Fields[i]), *ptype, std::get<2>(Fields[i]), std::get<3>(Fields[i]));
+		pTable->AddField(pField);
+	}
+	pDatabase[pTable->TableName] = pTable;
+	return pTable;
+}
+
 void StoreDatabase(string filePath, DB* database) {
 	ofstream fs;
 	fs.open(filePath, ios::out | ios::binary);
@@ -540,8 +588,12 @@ void LoadDatabase(string filePath, DB* database) {
 			else if (type == CHAR.id) {
 				datatype = &CHAR;
 			}
-			else {
+			else if (type == BYTE.id) {
 				datatype = &BYTE;
+			}
+			else {
+				LogInfo("Unknown data type.", 14);
+				return;
 			}
 			//长度uint32_t
 			fs.read((char*)&FieldSize, sizeof(uint32_t));
@@ -574,26 +626,26 @@ int main() {
 
 	DB database = DB();
 
-	Table* studentTable = new Table((char*)"Students");
+	auto studentsTable = Create(database, "Students", {
+		{"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},
+		{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
+		{"Age","INT",1,FIELD_PROPERTY_DEFAULT},
+		{"Gender","CHAR",1,FIELD_PROPERTY_DEFAULT},
+		{"Grade","INT",1,FIELD_PROPERTY_DEFAULT},
+		});
 
-	studentTable->AddField(new Field((char*)"Name", CHAR, 32, FIELD_PROPERTY_DEFAULT));
-	studentTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
-	studentTable->AddField(new Field((char*)"Age", INT, 1, FIELD_PROPERTY_DEFAULT));
-	studentTable->AddField(new Field((char*)"Gender", CHAR, 1, FIELD_PROPERTY_DEFAULT));
-	studentTable->AddField(new Field((char*)"Grade", INT, 1, FIELD_PROPERTY_DEFAULT));
+	Insert(studentsTable, { "Name", "No", "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
+	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Azura", "20011", "20", "M", "3" });
+	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Monika", "20012", "20", "F", "3" });
+	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
+	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
 
-	Insert(studentTable, { "Name", "No",  "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
-	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Azura", "20011", "20", "M", "3" });
-	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Monika", "20012", "20", "F", "3" });
-	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
-	Insert(studentTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
 
-	database[studentTable->TableName] = studentTable;
-
-	Table* scoreTable = new Table((char*)"Score");
-	scoreTable->AddField(new Field((char*)"Point", FLOAT, 1, FIELD_PROPERTY_DEFAULT));
-	scoreTable->AddField(new Field((char*)"Mark", INT, 1, FIELD_PROPERTY_DEFAULT));
-	scoreTable->AddField(new Field((char*)"No", INT, 1, FIELD_PROPERTY_PK | FIELD_PROPERTY_INDEX));
+	Table* scoreTable = Create(database, "Score", {
+		{"Point","FLOAT",1,FIELD_PROPERTY_DEFAULT},
+		{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
+		{"Mark","INT",1,FIELD_PROPERTY_DEFAULT},
+		});
 
 	Insert(scoreTable, { "Mark", "No","Point" }, { "98", "20010","3.5" });
 	Insert(scoreTable, { "Mark","Point", "No" }, { "99", "4.5", "20011" });
@@ -601,17 +653,15 @@ int main() {
 	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
 	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
 
-	database[scoreTable->TableName] = scoreTable;
-
-	//StoreDatabase("TestDataBase.hex", &database);
-	//return 0;
+	From(database, { "Score" ,"Students" })->Print();
 
 	DB Loaddb = DB();
 	LoadDatabase("TestDataBase.hex", &Loaddb);
+	Create(Loaddb, "Class", { {"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK} });
 
 	auto start = clock();
 	Table* crossJoin = new Table();
-	Table* ls[] = { studentTable, scoreTable };
+	Table* ls[] = { studentsTable, scoreTable };
 
 	auto times = 1;
 	for (int i = 0; i < times; ++i) {
