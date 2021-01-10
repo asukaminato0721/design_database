@@ -1,4 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 
 #include "./DataStructureModule.h"
 using namespace std;
@@ -34,9 +37,16 @@ vector<string> split(const string& str, const string& delim) {
 	char* p = strtok(strs, d);
 	while (p) {
 		string s = p; //分割得到的字符串转换为string类型
+
+		auto begin = s.find_first_not_of(' ');
+		auto end = s.find_last_not_of(' ');
+		s = s.substr(begin, end - begin + 1);
+
 		res.push_back(s); //存入结果数组  
 		p = strtok(NULL, d);
 	}
+	delete strs;
+	delete d;
 	return res;
 }
 
@@ -150,6 +160,7 @@ public:
 		memset(this->TableField, 0, MAX_FIELD_NUMBER);
 	}
 	~Table() {
+		delete ExData_Cache;
 		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
 			delete this->TableField[i];
 		}
@@ -527,6 +538,19 @@ Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string,
 	return pTable;
 }
 
+void Drop(DB& pDatabase, const string& tableName) {
+	auto iter = pDatabase.find(tableName);
+	if (iter == pDatabase.end()) {
+		LogInfo("Can not find such Table", 9);
+		return;
+	}
+	auto pTable = iter->second;
+	delete pTable;
+	pDatabase.erase(iter);
+	return;
+}
+
+
 void SQL(DB& db, string sql) {
 	string upperSql = sql;
 	transform(upperSql.begin(), upperSql.end(), upperSql.begin(), ::toupper);
@@ -605,23 +629,37 @@ void SQL(DB& db, string sql) {
 		}
 		db[pTable->TableName] = pTable;
 	}
-	else if (upperSql.compare(0, 12, "INSERT INTO", 0, 12) == 0) {
+	else if (upperSql.compare(0, 10, "INSERT INTO", 0, 10) == 0) {
+		auto sqlSplite = split(sql, " ");
+		string tableName = sqlSplite[2];
+		auto FirstLeftParenthese = sql.find_first_of("(");
+		auto LastLeftParenthese = sql.find_last_of("(");
+		auto FirstRightParenthese = sql.find_first_of(")");
+		auto LastRightParenthese = sql.find_last_of(")");
+		if (FirstLeftParenthese == LastLeftParenthese) {//全插入
+			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
+			Table* pTable = db[tableName];
+			vector<string> allField;
+			for (uint32_t i = 0; i < pTable->TableFieldNum; i++)
+			{
+				allField.push_back(pTable->TableField[i]->FieldName);
+			}
+			Insert(db[tableName], allField, split(datastr, ","));
+		}
+		else {//指定插入
+			string fieldstr = sql.substr(FirstLeftParenthese + 1, FirstRightParenthese - FirstLeftParenthese - 1);
+			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
+			Insert(db[tableName], split(fieldstr, ","), split(datastr, ","));
 
+		}
+	}
+	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
+		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
+		Drop(db, tableName);
 	}
 }
 
 
-void Drop(DB& pDatabase, const string& tableName) {
-	auto iter = pDatabase.find(tableName);
-	if (iter == pDatabase.end()) {
-		LogInfo("Can not find such Table", 9);
-		return;
-	}
-	auto pTable = iter->second;
-	delete pTable;
-	pDatabase.erase(iter);
-	return;
-}
 
 void StoreDatabase(string filePath, DB* database) {
 	ofstream fs;
@@ -778,51 +816,61 @@ int main() {
 	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
 	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
 
-	SQL(database, "SELECT * FROM Students,Score;");
+	SQL(database, "SELECT * FROM Students  , Score;");
 	SQL(database, "CREATE TABLE Classes (Name char(32) PRIMARY KEY,No int not null,Size int,avg float);");
+	SQL(database, "INSERT INTO Classes ( Name, No,Size) VALUES (\"class_1\" ,10021 ,45);");
+	SQL(database, "INSERT INTO Classes VALUES (\"class_2\" ,10022 ,33,1.25);");
+	SQL(database, "SELECT * FROM Classes;");
+	SQL(database, "Drop table Classes;");
 
-	return 0;
-	From(database, { "Score" ,"Students" })->Print();
-
-	Drop(database, "Score");
-
-	DB Loaddb = DB();
-	LoadDatabase("TestDataBase.hex", &Loaddb);
-	Create(Loaddb, "Class", { {"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK} });
-
-	auto start = clock();
-	Table* crossJoin = new Table();
-	Table* ls[] = { studentsTable, scoreTable };
-
-	auto times = 1;
-	for (int i = 0; i < times; ++i) {
-		//delete crossJoin;
-		//crossJoin = From(2, ls);
-
-		//memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-
-		//studentTable->InsertData(studentRow);
-		//studentTable->DeleteData(0);
+	for (auto i = database.begin(); i != database.end(); i++)
+	{
+		delete i->second;
 	}
-	auto end = clock();
-	printf("Time Cost %lf ms \n", (double)(end - start) / times);
 
-	Loaddb["Students"]->Print();
-	Loaddb["Score"]->Print();
+	_CrtDumpMemoryLeaks();
+	return 0;
+	//From(database, { "Score" ,"Students" })->Print();
 
-	crossJoin = From(Loaddb, { "Students","Score" });
-	crossJoin->Print();
-	auto Scores = Select(Where(crossJoin, __connect_on_no), { "Students.Name", "Students.No","Score.Score" });
-	Scores->Print();
+	//Drop(database, "Score");
 
+	//DB Loaddb = DB();
+	//LoadDatabase("TestDataBase.hex", &Loaddb);
+	//Create(Loaddb, "Class", { {"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK} });
 
-	//crossJoin->DeleteData(1);
+	//auto start = clock();
+	//Table* crossJoin = new Table();
+	//Table* ls[] = { studentsTable, scoreTable };
+
+	//auto times = 1;
+	//for (int i = 0; i < times; ++i) {
+	//	//delete crossJoin;
+	//	//crossJoin = From(2, ls);
+
+	//	//memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
+
+	//	//studentTable->InsertData(studentRow);
+	//	//studentTable->DeleteData(0);
+	//}
+	//auto end = clock();
+	//printf("Time Cost %lf ms \n", (double)(end - start) / times);
+
+	//Loaddb["Students"]->Print();
+	//Loaddb["Score"]->Print();
+
+	//crossJoin = From(Loaddb, { "Students","Score" });
 	//crossJoin->Print();
+	//auto Scores = Select(Where(crossJoin, __connect_on_no), { "Students.Name", "Students.No","Score.Score" });
+	//Scores->Print();
+
+
+	////crossJoin->DeleteData(1);
+	////crossJoin->Print();
 
 
 
-	auto ss = crossJoin->MakeExchangeData(0);
-	//cout << (char*)ss->Data("Students.Name") << endl;
+	//auto ss = crossJoin->MakeExchangeData(0);
+	////cout << (char*)ss->Data("Students.Name") << endl;
 	return 0;
 }
 
