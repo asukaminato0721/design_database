@@ -18,6 +18,7 @@ def select(request: HttpRequest) -> HttpResponse:
         {"idx": 1, "item": 123},
         {"idx": 2, "item": 234},
     ]
+    # query_result = sqlparser("语句")
     headings = query_result[0].keys()
     values = [x.values() for x in query_result]
     return render(request, "select.html", context=locals())
