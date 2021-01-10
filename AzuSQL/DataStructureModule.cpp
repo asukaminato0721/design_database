@@ -23,6 +23,14 @@ const Datatype BYTE = { 11, 1 };
 
 typedef map<string, Table*> DB;
 
+string strip(const string& str) {
+	if (str == "") {
+		return "";
+	}
+	auto begin = str.find_first_not_of(' ');
+	auto end = str.find_last_not_of(' ');
+	return str.substr(begin, end - begin + 1);
+}
 
 vector<string> split(const string& str, const string& delim) {
 	vector<string> res;
@@ -37,11 +45,7 @@ vector<string> split(const string& str, const string& delim) {
 	char* p = strtok(strs, d);
 	while (p) {
 		string s = p; //分割得到的字符串转换为string类型
-
-		auto begin = s.find_first_not_of(' ');
-		auto end = s.find_last_not_of(' ');
-		s = s.substr(begin, end - begin + 1);
-
+		s = strip(s);
 		res.push_back(s); //存入结果数组  
 		p = strtok(NULL, d);
 	}
@@ -88,6 +92,7 @@ public:
 	uint32_t Length(string key) {
 		return this->DataTuple[key]->length;
 	}
+
 };
 
 //属性名+类型号+长度+标签
@@ -200,7 +205,6 @@ public:
 			LogInfo("Index out of range.", 8);
 			return nullptr;
 		}
-
 		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
 			string fName = this->TableField[i]->FieldName;
 			this->ExData_Cache->DataTuple[fName]->length = this->TableField[i]->FieldSize;
@@ -223,7 +227,6 @@ public:
 		this->Data.push_back(pDataRow);
 		return this;
 	}
-
 	/// <summary>
 	/// 删除表中的数据
 	/// </summary>
@@ -234,6 +237,289 @@ public:
 		free(*p);
 		this->Data.erase(p);
 		return this;
+	}
+
+	vector<uint64_t>* WhereFilter(const string& whereStr) {
+
+		//Score.Mark >= 60 and Score.Mark < 90
+		if (whereStr == "") {
+			auto pRet = new vector<uint64_t>();
+			for (uint64_t i = 0; i < this->Data.size(); ++i) {
+				pRet->push_back(i);
+			}
+			return pRet;
+		}
+
+		//TODO 默认在关键字之间会添加空格，计划自动添加空格
+		string UpperWhere = whereStr;
+		transform(UpperWhere.begin(), UpperWhere.end(), UpperWhere.begin(), ::toupper);
+
+		auto token = split(whereStr, " ");
+		auto UpperToken = split(UpperWhere, " ");
+		vector<uint8_t> tokenType = vector<uint8_t>(token.size());
+
+		vector<string> postFix;
+		stack<string>buff;
+		//make postfix
+		for (uint32_t i = 0; i < token.size(); ++i) {
+			if (UpperToken[i] == "<" || UpperToken[i] == "<=" ||
+				UpperToken[i] == "=" || UpperToken[i] == ">=" ||
+				UpperToken[i] == ">" || UpperToken[i] == "!=" ||
+				UpperToken[i] == "AND" || UpperToken[i] == "OR") {
+				if (buff.size() == 0) {
+					buff.push(token[i]);
+				}
+				else
+				{
+					while ((
+						(UpperToken[i] == "AND" || UpperToken[i] == "OR")
+						&& buff.size() != 0
+						&& (buff.top() != "AND" && buff.top() != "OR"))
+						)
+					{
+						postFix.push_back(buff.top());
+						buff.pop();
+					}
+					buff.push(UpperToken[i]);
+				}
+			}
+			else {
+				postFix.push_back(token[i]);
+			}
+		}
+		while (buff.size() != 0)
+		{
+			postFix.push_back(buff.top());
+			buff.pop();
+		}
+		//cal
+
+		vector<uint64_t>* result = new vector<uint64_t>;
+		if (result == NULL) {
+			LogInfo("Unable to allocate memory", 12);
+			return nullptr;
+		}
+		stack<string> res;
+		for (uint64_t index = 0; index < this->Data.size(); index++)
+		{
+			for (uint32_t i = 0; i < postFix.size(); i++)
+			{
+				if (postFix[i] == "<" || postFix[i] == "<=" ||
+					postFix[i] == "=" || postFix[i] == ">=" ||
+					postFix[i] == ">" || postFix[i] == "!=" ||
+					postFix[i] == "AND" || postFix[i] == "OR")
+				{
+					if (res.size() < 2) {
+						LogInfo("Syntax error.", 16);
+						return nullptr;
+					}
+					string a = res.top(); res.pop();
+					string b = res.top(); res.pop();
+					string op = postFix[i];
+					string ans;
+
+					uint8_t typeIdA = 0;
+					uint8_t typeIdB = 0;
+					uint32_t beginA, lengthA, beginB, lengthB;
+					double diff;
+					if (op == "OR") {
+						if (a == "TRUE" || b == "TRUE") {
+							ans = "TRUE";
+						}
+						else if (a == "FALSE") {
+							ans = b;
+						}
+						else if (b == "FALSE") {
+							ans = a;
+						}
+						else {
+							LogInfo("Syntax error at OR.", 16);
+							return nullptr;
+						}
+					}
+					else if (op == "AND") {
+						if (a == "FALSE" || b == "FALSE") {
+							ans = "FALSE";
+						}
+						else if (a == "TRUE") {
+							ans = b;
+						}
+						else if (b == "TRUE") {
+							ans = a;
+						}
+						else {
+							LogInfo("Syntax error at AND.", 16);
+							return nullptr;
+						}
+					}
+					else {
+						if (isdigit(a[0]) == false) {
+							auto p = this->FieldMap[a];
+							typeIdA = p->FieldType.id;
+							beginA = p->Offset;
+							lengthA = p->FieldSize;
+						}
+						if (isdigit(b[0]) == false) {
+							auto p = this->FieldMap[b];
+							typeIdB = p->FieldType.id;
+							beginB = p->Offset;
+							lengthB = p->FieldSize;
+						}
+						if (typeIdA != 0 && typeIdB != 0) {
+							if (typeIdA != typeIdB) {
+								LogInfo("Can not compare diferent type.", 14);
+								return nullptr;
+							}
+							if (lengthA != lengthB) {
+								LogInfo("Can not compare diferent length.", 15);
+								return nullptr;
+							}
+						}
+						if (typeIdA == 0 && typeIdB == 0) {//imm op imm
+							diff = atof(a.c_str()) - atof(b.c_str());
+							if (diff == 0) {
+								if (op == ">=" || op == "<=" || op == "=") {
+									ans = "TRUE";
+								}
+								else {
+									ans = "FALSE";
+								}
+							}
+							else if (diff > 0) {
+								if (op == ">=" || op == ">" || op == "!=") {
+									ans = "TRUE";
+								}
+								else {
+									ans = "FALSE";
+								}
+							}
+							else {
+								if (op == "<=" || op == "<" || op == "!=") {
+									ans = "TRUE";
+								}
+								else {
+									ans = "FALSE";
+								}
+							}
+						}
+						else if (typeIdA == 0 && typeIdB != 0) {//imm op data
+							if (typeIdB == INT.id) {
+								int32_t _a = atoi(a.c_str());
+								int32_t _b = *(int*)(this->Data[index] + beginB);
+								diff = _a - _b;
+							}
+							else if (typeIdB == FLOAT.id) {
+								double _a = atof(a.c_str());
+								double _b = *(double*)(this->Data[index] + beginB);
+								diff = _a - _b;
+							}
+							else if (typeIdB == CHAR.id) {
+								diff = memcmp(a.c_str(), this->Data[index] + beginB, lengthB);
+							}
+							else if (typeIdB == BYTE.id) {
+								diff = memcmp(a.c_str(), this->Data[index] + beginB, lengthB);
+							}
+							else {
+								LogInfo("Unknown data type.", 14);
+								return nullptr;
+							}
+
+						}
+						else if (typeIdA != 0 && typeIdB == 0) {//data op imm
+							if (typeIdA == INT.id) {
+								int32_t _b = atoi(b.c_str());
+								int32_t _a = *(int*)(this->Data[index] + beginA);
+								diff = _a - _b;
+							}
+							else if (typeIdA == FLOAT.id) {
+								double _b = atof(b.c_str());
+								double _a = *(double*)(this->Data[index] + beginA);
+								diff = _a - _b;
+							}
+							else if (typeIdA == CHAR.id) {
+								diff = memcmp(this->Data[index] + beginA, b.c_str(), lengthA);
+							}
+							else if (typeIdA == BYTE.id) {
+								diff = memcmp(this->Data[index] + beginA, b.c_str(), lengthA);
+							}
+							else {
+								LogInfo("Unknown data type.", 14);
+								return nullptr;
+							}
+
+						}
+						else if (typeIdA != 0 && typeIdB != 0) {//data op data
+							if (typeIdB == INT.id) {
+								int32_t _a = *(int*)(this->Data[index] + beginA);
+								int32_t _b = *(int*)(this->Data[index] + beginB);
+								diff = _a - _b;
+							}
+							else if (typeIdB == FLOAT.id) {
+								double _a = *(double*)(this->Data[index] + beginA);
+								double _b = *(double*)(this->Data[index] + lengthB);
+								diff = _a - _b;
+							}
+							else if (typeIdB == CHAR.id) {
+								diff = memcmp(this->Data[index] + beginA, this->Data[index] + beginB, lengthA);
+							}
+							else if (typeIdB == BYTE.id) {
+								diff = memcmp(this->Data[index] + beginA, this->Data[index] + beginB, lengthA);
+							}
+							else {
+								LogInfo("Unknown data type.", 14);
+								return nullptr;
+							}
+						}
+
+						if (diff == 0) {
+							if (op == ">=" || op == "<=" || op == "=") {
+								ans = "TRUE";
+							}
+							else {
+								ans = "FALSE";
+							}
+						}
+						else if (diff < 0) {
+							if (op == ">=" || op == ">" || op == "!=") {
+								ans = "TRUE";
+							}
+							else {
+								ans = "FALSE";
+							}
+						}
+						else {
+							if (op == "<=" || op == "<" || op == "!=") {
+								ans = "TRUE";
+							}
+							else {
+								ans = "FALSE";
+							}
+						}
+					}
+					res.push(ans);
+				}
+				else {
+					res.push(postFix[i]);
+				}
+			}
+			if (res.size() == 1) {
+				if (res.top() == "TRUE") {
+					result->push_back(index);
+				}
+				else if (res.top() != "FALSE") {
+					LogInfo("Syntax error.", 15);
+					return nullptr;
+				}
+				res.pop();
+			}
+			else {
+				LogInfo("Syntax error.", 15);
+				return nullptr;
+			}
+
+		}
+
+		return result;
 	}
 
 	const void Print() {
@@ -415,18 +701,15 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 /// </summary>
 /// <param name="constraint">约束条件</param>
 /// <returns>查询结果</returns>
-Table* Where(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
+Table* Where(Table* pTable, const vector<uint64_t>& index) {
 	//TODO this pTable has no name
 	Table* retTable = new Table();
 	for (uint32_t i = 0; i < pTable->TableFieldNum; ++i) {
 		Field* newField = new Field(pTable->TableField[i]);
 		retTable->AddField(newField);
 	}
-	for (uint64_t i = 0; i < pTable->Data.size(); ++i) {
-		pTable->MakeExchangeData(i);
-		if (constraint(pTable->ExData_Cache) == true) {
-			retTable->InsertData(pTable->Data[i]);
-		}
+	for (uint32_t i = 0; i < index.size(); ++i) {
+		retTable->InsertData(pTable->Data[index[i]]);
 	}
 	return retTable;
 }
@@ -559,18 +842,28 @@ void SQL(DB& db, string sql) {
 		auto selectIndex = upperSql.find("SELECT");//selectIndex+7
 		auto fromIndex = upperSql.find("FROM");//fromIndex+5
 		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
+
+		string whereStr;
 		if (whereIndex == string::npos) {
 			whereIndex = upperSql.length() - 1;
+			whereStr = "";
+		}
+		else {
+			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
+
 		}
 		string select = sql.substr(selectIndex + 7, fromIndex - selectIndex - 7 - 1);
 		string from = sql.substr(fromIndex + 5, whereIndex - fromIndex - 5);
-		string where = sql.substr(whereIndex, whereIndex - sql.length() + 1);
 
 		vector<string> selectVec = split(select, ",");
 		vector<string> fromVec = split(from, ",");
 		Table* fromTable = From(db, fromVec);
-		Table* selectTable = Select(fromTable, selectVec);
+		auto rowList = fromTable->WhereFilter(strip(whereStr));
+		Table* whereTable = Where(fromTable, *rowList);
+
+		Table* selectTable = Select(whereTable, selectVec);
 		selectTable->Print();
+		free(rowList);
 		free(fromTable);
 		free(selectTable);
 	}
@@ -803,7 +1096,6 @@ int main() {
 	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
 	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
 
-
 	Table* scoreTable = Create(database, "Score", {
 		{"Point","FLOAT",1,FIELD_PROPERTY_DEFAULT},
 		{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
@@ -816,7 +1108,8 @@ int main() {
 	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
 	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
 
-	SQL(database, "SELECT * FROM Students  , Score;");
+
+	SQL(database, "SELECT * FROM Students , Score WHERE Students.No = Score.No;");
 	SQL(database, "CREATE TABLE Classes (Name char(32) PRIMARY KEY,No int not null,Size int,avg float);");
 	SQL(database, "INSERT INTO Classes ( Name, No,Size) VALUES (\"class_1\" ,10021 ,45);");
 	SQL(database, "INSERT INTO Classes VALUES (\"class_2\" ,10022 ,33,1.25);");
@@ -827,6 +1120,8 @@ int main() {
 	{
 		delete i->second;
 	}
+
+
 
 	_CrtDumpMemoryLeaks();
 	return 0;
