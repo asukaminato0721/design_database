@@ -70,6 +70,10 @@ def filterResource(r, pProject):
             while r[i] != '\n':
                 # print("注释", i)
                 i += 1
+        # 添加sql中的单行注释
+        if r[i] == '-' and r[i + 1] == '-':
+            while r[i] != '\n':
+                i += 1
         elif r[i] == '/' and r[i + 1] == '*':
             i += 2
             while r[i] != '*' or r[i + 1] != '/':
@@ -90,6 +94,16 @@ def filterResource(r, pProject):
     return r
 
 
+<<<<<<< HEAD
+# 识别界符和运算符
+def checkCalc(ch):
+    if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
+            or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
+            or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
+        return True
+    else:
+        return False
+=======
 def checkCalc(ch:str)->bool:
     # if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
     #         or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
@@ -100,6 +114,7 @@ def checkCalc(ch:str)->bool:
     return ch in { '+' , '-' , '*' , '/' , ';' , '(' , ')' , '^'
             , ',' , '\"' , '\'' , '~' , '#' , '%' , '['
             , ']' , '{' , '}' , '\\' , '.' , '\?' , ':'}
+>>>>>>> 9236e3353bae381dfed90d825199b41a3e945aff
 
 
 # 分析子程序，算法核心
