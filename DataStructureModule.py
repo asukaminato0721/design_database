@@ -235,7 +235,7 @@ def Delete(table: Table, constraints: Callable[[dict], bool]) -> Table:
 
 
 def Update(
-    table: Table, fieldlist: list, valuelist: list, constraints
+    table: Table, fieldlist: list, valuelist: list, constraints: Callable[[dict], bool]
 ) -> Table:
     """
     Update `table` set field1=value1,field2=value2,... where fields fit `constraints`\n

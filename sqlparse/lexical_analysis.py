@@ -1,4 +1,6 @@
 import json
+import os
+import pathlib
 
 # 词法分析 读取sql.txt文件中的程序进行分析
 # 1-50 表示保留字种别码，在这里添加系统的关键字
@@ -94,16 +96,6 @@ def filterResource(r, pProject):
     return r
 
 
-<<<<<<< HEAD
-# 识别界符和运算符
-def checkCalc(ch):
-    if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
-            or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
-            or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
-        return True
-    else:
-        return False
-=======
 def checkCalc(ch:str)->bool:
     # if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
     #         or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
@@ -114,7 +106,6 @@ def checkCalc(ch:str)->bool:
     return ch in { '+' , '-' , '*' , '/' , ';' , '(' , ')' , '^'
             , ',' , '\"' , '\'' , '~' , '#' , '%' , '['
             , ']' , '{' , '}' , '\\' , '.' , '\?' , ':'}
->>>>>>> 9236e3353bae381dfed90d825199b41a3e945aff
 
 
 # 分析子程序，算法核心
@@ -284,7 +275,8 @@ def getStr(token):
 token = []
 syn = -1
 pProject = 0
-with open("sql.txt", 'r', encoding='utf-8') as f:
+# https://stackoverflow.com/a/3430395/13040423
+with open(os.path.join(pathlib.Path(__file__).parent.absolute(),"sql.txt") , 'r', encoding='utf-8') as f:
     resourceProject = f.read()
 resourceProject.__add__('\0')
 print("过滤前的源程序：")
@@ -317,7 +309,7 @@ while syn != 0:
         writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
 for i in range(100):
     print("第%d个标识符:%s" % (i + 1, IdentifierTbl[i]))
-    writeStr("第" + i + "个标识符: " + IdentifierTbl[i])
+    writeStr(f"第{i}个标识符: " + IdentifierTbl[i])
 
 
 def parse_sql() -> list:
@@ -325,7 +317,7 @@ def parse_sql() -> list:
     token = []
     syn = -1
     pProject = 0
-    with open("sql.txt", 'r', encoding='utf-8') as f:
+    with open(os.path.join(pathlib.Path(__file__).parent.absolute(),"sql.txt"), 'r', encoding='utf-8') as f:
         resourceProject = f.read()
     resourceProject.__add__('\0')
     # print("过滤前的源程序：")
