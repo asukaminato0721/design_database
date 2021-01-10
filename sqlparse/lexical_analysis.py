@@ -3,6 +3,7 @@ import json
 # 词法分析 读取sql.txt文件中的程序进行分析
 # 1-50 表示保留字种别码，在这里添加系统的关键字
 # 部分还是C++程序的关键字保留字，可以删除
+#完善SQL关键字
 reserveWord = [
     "auto", "break", "case", "char", "const", "continue",
     "default", "do", "double", "else", "enum", "extern",
@@ -10,7 +11,8 @@ reserveWord = [
     "register", "return", "short", "signed", "sizeof", "static",
     "struct", "switch", "typedef", "union", "unsigned", "void",
     "volatile", "while", "bool", "return", "false", "else", "char",
-    "select", "from", "where"]
+    "select", "from", "where","and","or","not",
+    "as","between"]
 # 51-90表示操作符种别码 这里一共36种
 operatorOrDelimiter = [
     "+", "-", "*", "/", "<", "<=", ">", ">=", "=", "==",
