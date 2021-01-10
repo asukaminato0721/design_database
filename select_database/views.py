@@ -6,15 +6,15 @@ from database_data import all_tables, all_database
 
 
 # Create your views here.
-def select(request: HttpRequest) -> HttpResponse:
+def select(request: HttpRequest, db: str = "") -> HttpResponse:
     # https://www.runoob.com/django/django-form.html
     query_cmd = request.GET.get("query_cmd", "")
-    当前数据库 = request.GET.get("db","暂无")
     is_valid = False
+    提示语句 = ""
     if not query_cmd:
-        query_cmd = f"您未输入查询"
+        提示语句 = f"您未输入查询"
     else:
-        query_cmd = f"您输入的查询是{query_cmd}"
+        提示语句 = f"您输入的查询是{query_cmd}"
         is_valid = True
     query_result = [
         {"idx": 1, "item": 123},

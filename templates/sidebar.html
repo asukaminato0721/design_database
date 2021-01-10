@@ -1,0 +1,6 @@
+<h4>更换数据库</h4>
+<div class="list-group">
+{% for db in all_database %}
+    <a href="/{{当前页面}}/{{db}}" class="list-group-item list-group-item-action list-group-item-info">{{db}}</a>
+ {% endfor %}
+</div>

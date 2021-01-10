@@ -1,24 +1,27 @@
 {% include "./template.html" %}
 <div class="row">
-  <div class="col-md-2"></div>
-  <div class="col-md-8">
+  <div class="col-md-1"></div>
+  <div class="col-md-2">{% include "./sidebar.html" %}</div>
+  <div class="col-md-6">
     <form>
       {% csrf_token %}
       <div class="mb-3">
-        <label for="exampleInputEmail1" class="form-label"
-          >输入 SQL 修改语句</label
-        >
-        <input
-          class="form-control"
-          id="query_cmd"
-          name="query_cmd"
-          aria-describedby="emailHelp"
-        />
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">输入 SQL 修改语句</span>
+          </div>
+          <textarea
+            class="form-control"
+            aria-label="With textarea"
+            id="query_cmd"
+            name="query_cmd"
+          >{{query_cmd | default:''}}</textarea>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary">提交</button>
     </form>
     共有 {{lines}} 行受影响
   </div>
-  <div class="col-md-2"></div>
+  <div class="col-md-3"></div>
 </div>
 {% include "./scripts.html"%}
