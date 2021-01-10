@@ -3,15 +3,16 @@ import time
 import pickle
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List
+from typing import Callable, List
 
 # ======================== Const definition ========================
-FILE_PATH = 'database.db'
+FILE_PATH = "database.db"
 
 
 # ======================== Const definition end ========================
 
 # ======================== Class definition ========================
+
 
 class DataType(Enum):
     # Binary Data (no size limits)
@@ -24,7 +25,7 @@ class DataType(Enum):
 
 @dataclass
 class Field:
-    FieldName: str = ''
+    FieldName: str = ""
     FieldType: DataType = DataType.BIN
     FieldIsPK: bool = False
     FieldAllowNull: bool = True
@@ -33,13 +34,14 @@ class Field:
 @dataclass
 class Table:
     # Name of the Table
-    TableName: str = ''
+    TableName: str = ""
     # cols in the table
     # Eg: [Field1(Name,TEXT),Field2(Gender,TEXT),Field3(Age,INTERGER)]
     TableField: List[Field] = field(default_factory=list)
     # Rows in the table
     # Eg: [(Zhangsan,Male,14),(lisi,Male,16),(Wanghong,Female,15)]
     TableData: List[tuple] = field(default_factory=list)
+
 
 # ======================== Class definition end ========================
 
@@ -55,7 +57,7 @@ def ReadFile(filePath: str) -> list:
     Open and Read Database File from `filePath` and return database object
     """
     try:
-        DBFileHandle = open(filePath, 'rb')
+        DBFileHandle = open(filePath, "rb")
     except:
         print("Error: 没有找到文件或读取文件失败")
         return None
@@ -70,7 +72,7 @@ def SaveFile(filePath: str, database: list) -> int:
     Save `database` from memory to file
     """
     try:
-        DBFileHandle = open(filePath, 'wb')
+        DBFileHandle = open(filePath, "wb")
     except:
         print("Error: 没有找到文件或读取文件失败")
         return None
@@ -80,7 +82,7 @@ def SaveFile(filePath: str, database: list) -> int:
 
 
 def Create(name: str, fieldlist: list, datalist: list) -> Table:
-    if(FindTable(name) != None):
+    if FindTable(name) != None:
         print("Error:表已存在")
         return None
     db = ReadFile(FILE_PATH)
@@ -93,7 +95,7 @@ def Create(name: str, fieldlist: list, datalist: list) -> Table:
 def Drop(name: str):
     db = ReadFile(FILE_PATH)
     for tName in db:
-        if(tName.TableName == name):
+        if tName.TableName == name:
             db.remove(tName)
     SaveFile(FILE_PATH, db)
 
@@ -102,41 +104,41 @@ def From(*tables: Table) -> Table:
     """
     Calculating Cartesian product of `tables1,[tables2,tables3,...]`
     """
-    if(len(tables) == 1):
+    if len(tables) == 1:
         return tables[0]
 
-    retTable = Table()
-    retTable.TableName = tables[0].TableName
+    retTable = Table(TableName=tables[0].TableName)
     for fields in tables[0].TableField:
         retTable.TableField.append(
-            Field(tables[0].TableName+'.'+fields.FieldName,
-                  fields.FieldType,
-                  fields.FieldIsPK,
-                  fields.FieldAllowNull
-                  )
+            Field(
+                tables[0].TableName + "." + fields.FieldName,
+                fields.FieldType,
+                fields.FieldIsPK,
+                fields.FieldAllowNull,
+            )
         )
     retTable.TableData = tables[0].TableData
     for t in tables[1:]:
-        retTable.TableName += '&' + t.TableName
+        retTable.TableName += "&" + t.TableName
 
         for fields in t.TableField:
             retTable.TableField.append(
-                Field(t.TableName+'.'+fields.FieldName,
-                      fields.FieldType,
-                      fields.FieldIsPK,
-                      fields.FieldAllowNull
-                      )
+                Field(
+                    t.TableName + "." + fields.FieldName,
+                    fields.FieldType,
+                    fields.FieldIsPK,
+                    fields.FieldAllowNull,
+                )
             )
 
-        rowsBuff = []
-        for col1 in retTable.TableData:
-            for col2 in t.TableData:
-                rowsBuff.append(col1+col2)
+        rowsBuff = [
+            col1 + col2 for col1 in retTable.TableData for col2 in t.TableData
+        ]
         retTable.TableData = rowsBuff
     return retTable
 
 
-def Where(table: Table, constraints) -> Table:
+def Where(table: Table, constraints: Callable[[dict], bool]) -> Table:
     # TODO : Need to refactor
     """
     Get rows from `table` where rows fit `constraints`\n
@@ -147,17 +149,11 @@ def Where(table: Table, constraints) -> Table:
     retTable.TableField = table.TableField
     retTable.TableName = table.TableName
 
-    fieldName = []
-    for field in table.TableField:
-        fieldName.append(field.FieldName)
+    fieldName = [field.FieldName for field in table.TableField]
     for rows in table.TableData:
-        line = dict()
-        for i in range(len(fieldName)):
-            line[fieldName[i]] = rows[i]
-        if(constraints(line) == True):
-            col = []
-            for fname in fieldName:
-                col.append(line[fname])
+        line = dict(zip(fieldName, rows))
+        if constraints(line):
+            col = [line[fname] for fname in fieldName]
             retTable.TableData.append(tuple(col))
     return retTable
 
@@ -168,22 +164,19 @@ def Select(table: Table, fieldList: list) -> Table:
     `fieldList` should be a list consists of string or '*'\n
     Eg :`Select(table_1,['Age','Gender'])`
     """
-    if(fieldList == '*'):
+    if fieldList == "*":
         return table
 
-    retTable = Table()
-    retTable.TableName = table.TableName
+    retTable = Table(TableName=table.TableName)
 
     selectFieldIndex = []
     for tfName in fieldList:
-        for i in range(len(table.TableField)):
-            if(table.TableField[i].FieldName == tfName):
-                retTable.TableField.append(table.TableField[i])
+        for i, TableFieldi in enumerate(table.TableField):
+            if TableFieldi.FieldName == tfName:
+                retTable.TableField.append(TableFieldi)
                 selectFieldIndex.append(i)
     for row in table.TableData:
-        rowCache = []
-        for i in selectFieldIndex:
-            rowCache.append(row[i])
+        rowCache = [row[i] for i in selectFieldIndex]
         retTable.TableData.append(tuple(rowCache))
     return retTable
 
@@ -193,20 +186,20 @@ def Insert(table: Table, row: tuple) -> Table:
     """
     Insert `row` into `table`
     """
-    if(len(table.TableField) == len(row)):
+    if len(table.TableField) == len(row):
         pkIndex = 0
         for f in table.TableField:
-            if f.FieldIsPK == True:
+            if f.FieldIsPK:
                 pkIndex = table.TableField.index(f)
         for data in table.TableData:
-            if(row[pkIndex]==data[pkIndex]):
+            if row[pkIndex] == data[pkIndex]:
                 print("Error:插入重复数据")
                 return None
         table.TableData.append(row)
         table.TableData.sort(key=lambda tup: tup[pkIndex])
         db = ReadFile(FILE_PATH)
         for tName in db:
-            if(tName.TableName == table.TableName):
+            if tName.TableName == table.TableName:
                 temp = db.index(tName)
                 db.remove(tName)
                 db.insert(temp, table)
@@ -217,28 +210,23 @@ def Insert(table: Table, row: tuple) -> Table:
         return None
 
 
-def Delete(table: Table, constraints) -> Table:
+def Delete(table: Table, constraints: Callable[[dict], bool]) -> Table:
     # TODO : Need to refactor
     """
     Delete rows from `table` where rows fit `constraints`\n
     `constraints` should be a lambda expression\n
     Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
     """
-    fieldName = []
+    fieldName = [field.FieldName for field in table.TableField]
     rowsData = []
-    for field in table.TableField:
-        fieldName.append(field.FieldName)
-
     for tableRow in table.TableData:
-        line = dict()
-        for fName in fieldName:
-            line[fName] = tableRow[fieldName.index(fName)]
-        if(constraints(line) == False):
+        line = {fName: tableRow[fieldName.index(fName)] for fName in fieldName}
+        if not constraints(line):
             rowsData.append(tableRow)
     table.TableData = rowsData
     db = ReadFile(FILE_PATH)
     for tName in db:
-        if(tName.TableName == table.TableName):
+        if tName.TableName == table.TableName:
             temp = db.index(tName)
             db.remove(tName)
             db.insert(temp, table)
@@ -246,7 +234,9 @@ def Delete(table: Table, constraints) -> Table:
     return table
 
 
-def Update(table: Table, fieldlist: list, valuelist: list, constraints) -> Table:
+def Update(
+    table: Table, fieldlist: list, valuelist: list, constraints
+) -> Table:
     """
     Update `table` set field1=value1,field2=value2,... where fields fit `constraints`\n
     `constraints` should be a lambda expresssion\n
@@ -257,26 +247,23 @@ def Update(table: Table, fieldlist: list, valuelist: list, constraints) -> Table
     pkIndex = 0
     for field in table.TableField:
         fieldName.append(field.FieldName)
-        if field.FieldIsPK == True:
+        if field.FieldIsPK:
             pkIndex = table.TableField.index(field)
 
     for tableRow in table.TableData:
-        line = dict()
-        for fName in fieldName:
-            line[fName] = tableRow[fieldName.index(fName)]
-        if(constraints(line) == False):
+        line = {fName: tableRow[fieldName.index(fName)] for fName in fieldName}
+        if not constraints(line):
             rowsData.append(tableRow)
         else:
             temp = list(tableRow)
             for fName in fieldlist:
-                temp[fieldName.index(
-                    fName)] = valuelist[fieldlist.index(fName)]
+                temp[fieldName.index(fName)] = valuelist[fieldlist.index(fName)]
             rowsData.append(tuple(temp))
     table.TableData = rowsData
     table.TableData.sort(key=lambda tup: tup[pkIndex])
     db = ReadFile(FILE_PATH)
     for tName in db:
-        if(tName.TableName == table.TableName):
+        if tName.TableName == table.TableName:
             temp = db.index(tName)
             db.remove(tName)
             db.insert(temp, table)
@@ -288,15 +275,15 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
-    if(table == None):
+    if table == None:
         return None
-    print(f'[Table : {table.TableName}]')
+    print(f"[Table : {table.TableName}]")
     for cols in table.TableField:
-        print(f"{cols.FieldName:>14}", end='')
+        print(f"{cols.FieldName:>14}", end="")
     print()
     for rows in table.TableData:
         for data in rows:
-            print(f"{data:>14}", end='')
+            print(f"{data:>14}", end="")
         print()
     print()
     return
@@ -306,7 +293,7 @@ def FindTable(name: str) -> Table:
     db = ReadFile(FILE_PATH)
     table = Table()
     for tName in db:
-        if(tName.TableName == name):
+        if tName.TableName == name:
             table = tName
             return table
     return None
@@ -364,56 +351,74 @@ def _Test():
     """
     # Drop('Student')
     # Drop('Score')
-    table_1 = Create('Student', [
-        Field('Name', DataType.TEXT, False, True),
-        Field('No', DataType.INTERGER, True, False),
-        Field('Gender', DataType.TEXT, False, True)
-    ],
+    table_1 = Create(
+        "Student",
         [
-        ('Mike', 10011, 'M'),
-        ('Louise', 10012, 'M'),
-        ('Monika', 10013, 'F'),
-        ('Jason', 10014, 'M'),
-        ('Alice', 10015, 'F'),
-        ('Ulrica', 10016, 'F'),
-        ('Bill', 10017, 'F'),
-        ('Alex', 10018, 'M'),
-        ('Jeb', 10019, 'F'),
-        ('Max', 10020, 'M'),
-    ])
-    table_2 = Create('Score',
-                     [
-                         Field('No', DataType.INTERGER, True, False),
-                         Field('Score', DataType.INTERGER, False, True)
-                     ],
-                     [
-                         (10011, 89),
-                         (10012, 92),
-                         (10013, 99),
-                         (10014, 77),
-                         (10015, 52),
-                         (10016, 55),
-                         (10017, 87),
-                         (10018, 80),
-                         (10019, 91),
-                         (10020, 100),
-                     ]
-                     )
-    PrintTable(FindTable('Student'))
-    PrintTable(FindTable('Score'))
+            Field("Name", DataType.TEXT, False, True),
+            Field("No", DataType.INTERGER, True, False),
+            Field("Gender", DataType.TEXT, False, True),
+        ],
+        [
+            ("Mike", 10011, "M"),
+            ("Louise", 10012, "M"),
+            ("Monika", 10013, "F"),
+            ("Jason", 10014, "M"),
+            ("Alice", 10015, "F"),
+            ("Ulrica", 10016, "F"),
+            ("Bill", 10017, "F"),
+            ("Alex", 10018, "M"),
+            ("Jeb", 10019, "F"),
+            ("Max", 10020, "M"),
+        ],
+    )
+    table_2 = Create(
+        "Score",
+        [
+            Field("No", DataType.INTERGER, True, False),
+            Field("Score", DataType.INTERGER, False, True),
+        ],
+        [
+            (10011, 89),
+            (10012, 92),
+            (10013, 99),
+            (10014, 77),
+            (10015, 52),
+            (10016, 55),
+            (10017, 87),
+            (10018, 80),
+            (10019, 91),
+            (10020, 100),
+        ],
+    )
+    PrintTable(FindTable("Student"))
+    PrintTable(FindTable("Score"))
     # SELECT Name,Score,No FROM Student,Score WHERE Student.No=Score.No and Score.Score>=60
-    PrintTable(Select(Where(From(FindTable('Student'), FindTable('Score')),
-                            lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60), ['Student.No', 'Student.Name', 'Score.Score']))
+    PrintTable(
+        Select(
+            Where(
+                From(FindTable("Student"), FindTable("Score")),
+                lambda line: line["Student.No"] == line["Score.No"]
+                and line["Score.Score"] >= 60,
+            ),
+            ["Student.No", "Student.Name", "Score.Score"],
+        )
+    )
 
     # DELETE FROM table_2 WHERE table_2.Score < 90
-    PrintTable(Delete(FindTable('Score'), lambda line: line['Score'] < 90))
+    PrintTable(Delete(FindTable("Score"), lambda line: line["Score"] < 90))
 
     # INSERT INTO table_2 VALUES (20012,59)
-    PrintTable(Insert(FindTable('Score'), (20012, 59)))
+    PrintTable(Insert(FindTable("Score"), (20012, 59)))
 
     # UPDATE table_2 SET No='20019',SCORE='100' WHERE No='10019'
-    PrintTable(Update(FindTable('Score'), ['No', 'Score'], [
-               20019, 100], lambda line: line['No'] == 10019))
+    PrintTable(
+        Update(
+            FindTable("Score"),
+            ["No", "Score"],
+            [20019, 100],
+            lambda line: line["No"] == 10019,
+        )
+    )
     # SaveFile(FILE_PATH, db)
     pass
 
