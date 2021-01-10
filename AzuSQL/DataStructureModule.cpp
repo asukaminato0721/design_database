@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
 #include <crtdbg.h>
 
 #include "./DataStructureModule.h"
@@ -134,20 +133,6 @@ class Table
 {
 
 public:
-	ExchangeData* ExData_Cache = nullptr;
-	void initCache() {
-		delete ExData_Cache;
-		this->ExData_Cache = new ExchangeData();
-		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
-			string fieldName = this->TableField[i]->FieldName;
-			ExchangeData::exData* exData = (ExchangeData::exData*)malloc(sizeof(ExchangeData::exData));
-			if (exData == NULL) {
-				LogInfo("Unable to allocate memory", 12);
-				return;
-			}
-			ExData_Cache->DataTuple[fieldName] = exData;
-		}
-	}
 
 	string TableName;
 	Field* TableField[MAX_FIELD_NUMBER];
@@ -165,7 +150,6 @@ public:
 		memset(this->TableField, 0, MAX_FIELD_NUMBER);
 	}
 	~Table() {
-		delete ExData_Cache;
 		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
 			delete this->TableField[i];
 		}
@@ -190,28 +174,11 @@ public:
 			}
 			this->TableRowSize += f->FieldSize;
 			TableFieldNum++;
-			this->initCache();
 			FieldMap[f->FieldName] = f;
 			return;
 		}
 	}
-	/// <summary>
-	/// 将表中的第`index`行转化为交换格式
-	/// </summary>
-	/// <param name="index">待转化的行</param>
-	/// <returns>交换格式</returns>
-	ExchangeData* MakeExchangeData(uint64_t index) {
-		if (index >= this->Data.size()) {
-			LogInfo("Index out of range.", 8);
-			return nullptr;
-		}
-		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
-			string fName = this->TableField[i]->FieldName;
-			this->ExData_Cache->DataTuple[fName]->length = this->TableField[i]->FieldSize;
-			this->ExData_Cache->DataTuple[fName]->pData = this->Data[index] + this->TableField[i]->Offset;
-		}
-		return ExData_Cache;
-	}
+
 	/// <summary>
 	/// 将数据插入表中（深拷贝）
 	/// </summary>
@@ -353,13 +320,13 @@ public:
 						}
 					}
 					else {
-						if (isdigit(a[0]) == false) {
+						if (isdigit(a[0]) == false && a[0] != '\'') {
 							auto p = this->FieldMap[a];
 							typeIdA = p->FieldType.id;
 							beginA = p->Offset;
 							lengthA = p->FieldSize;
 						}
-						if (isdigit(b[0]) == false) {
+						if (isdigit(b[0]) == false && b[0] != '\'') {
 							auto p = this->FieldMap[b];
 							typeIdB = p->FieldType.id;
 							beginB = p->Offset;
@@ -414,7 +381,7 @@ public:
 								diff = _a - _b;
 							}
 							else if (typeIdB == CHAR.id) {
-								diff = memcmp(a.c_str(), this->Data[index] + beginB, lengthB);
+								diff = strcmp(a.c_str(), (char*)this->Data[index] + beginB);
 							}
 							else if (typeIdB == BYTE.id) {
 								diff = memcmp(a.c_str(), this->Data[index] + beginB, lengthB);
@@ -635,7 +602,7 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 	}
 	//Table[0]
 	const Table* firstTable = pDatabase[tableNameList[0]];
-	retTable->TableName.assign(firstTable->TableName);
+	retTable->TableName = firstTable->TableName;
 	//Field Merge
 	for (uint32_t i = 0; i < firstTable->TableFieldNum; ++i) {
 		Field* f = (Field*)calloc(1, sizeof(Field));
@@ -702,13 +669,13 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 /// <param name="constraint">约束条件</param>
 /// <returns>查询结果</returns>
 Table* Where(Table* pTable, const vector<uint64_t>& index) {
-	//TODO this pTable has no name
 	Table* retTable = new Table();
+	retTable->TableName = pTable->TableName + "'";
 	for (uint32_t i = 0; i < pTable->TableFieldNum; ++i) {
 		Field* newField = new Field(pTable->TableField[i]);
 		retTable->AddField(newField);
 	}
-	for (uint32_t i = 0; i < index.size(); ++i) {
+	for (uint64_t i = 0; i < index.size(); ++i) {
 		retTable->InsertData(pTable->Data[index[i]]);
 	}
 	return retTable;
@@ -719,16 +686,9 @@ Table* Where(Table* pTable, const vector<uint64_t>& index) {
 /// </summary>
 /// <param name="constraint">约束条件</param>
 /// <returns>删除结果</returns>
-Table* Delete(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
-	for (uint32_t i = 0; i < pTable->TableFieldNum; ++i) {
-		Field* newField = new Field(pTable->TableField[i]);
-		pTable->AddField(newField);
-	}
-	for (uint64_t i = 0; i < pTable->Data.size(); ++i) {
-		pTable->MakeExchangeData(i);
-		if (constraint(pTable->ExData_Cache) == true) {
-			pTable->DeleteData(i);
-		}
+Table* Delete(Table* pTable, const vector<uint64_t>& index) {
+	for (int64_t i = index.size() - 1; i >= 0; --i) {
+		pTable->DeleteData(index[i]);
 	}
 	return pTable;
 }
@@ -740,6 +700,7 @@ Table* Delete(Table* pTable, bool(*constraint)(ExchangeData* pExData)) {
 /// <returns>投影后的结果</returns>
 Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	Table* retTable = new Table();
+	retTable->TableName = pTable->TableName + "'";
 	vector<uint32_t> begin, length;
 
 	for (uint32_t i = 0; i < fieldNames.size(); ++i) {
@@ -781,7 +742,6 @@ Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	return retTable;
 }
 
-//"Name","CHAR",32,FIELD_PROPERTY_PK
 Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string, string, int, int>>& Fields) {
 	auto FieldNum = Fields.size();
 	if (FieldNum > MAX_FIELD_NUMBER) {
@@ -833,8 +793,11 @@ void Drop(DB& pDatabase, const string& tableName) {
 	return;
 }
 
-
 void SQL(DB& db, string sql) {
+	if (sql[sql.length() - 1] != ';') {
+		LogInfo("Missing semicolon at the end of SQL", 5);
+		sql = sql + ";";
+	}
 	string upperSql = sql;
 	transform(upperSql.begin(), upperSql.end(), upperSql.begin(), ::toupper);
 
@@ -853,7 +816,7 @@ void SQL(DB& db, string sql) {
 
 		}
 		string select = sql.substr(selectIndex + 7, fromIndex - selectIndex - 7 - 1);
-		string from = sql.substr(fromIndex + 5, whereIndex - fromIndex - 5);
+		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
 
 		vector<string> selectVec = split(select, ",");
 		vector<string> fromVec = split(from, ",");
@@ -950,9 +913,27 @@ void SQL(DB& db, string sql) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
 	}
+	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
+		auto fromIndex = upperSql.find("FROM");//fromIndex+5
+		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
+
+		string whereStr;
+		if (whereIndex == string::npos) {
+			whereIndex = upperSql.length() - 1;
+			whereStr = "";
+		}
+		else {
+			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
+		}
+		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
+		Table* fromTable = From(db, { from });
+		auto rowList = fromTable->WhereFilter(whereStr);
+		Delete(db[from], *rowList);
+		free(fromTable);
+		free(rowList);
+
+	}
 }
-
-
 
 void StoreDatabase(string filePath, DB* database) {
 	ofstream fs;
@@ -1071,101 +1052,44 @@ void LoadDatabase(string filePath, DB* database) {
 	}
 }
 
-bool __connect_on_no(ExchangeData* ex) {
-	if (*(int*)(ex->Data("Students.No")) == *(int*)(ex->Data("Score.No"))) {
-		return true;
-	}
-	return false;
-}
-
 int main() {
 
 	DB database = DB();
 
-	auto studentsTable = Create(database, "Students", {
-		{"Name"		,"CHAR"	,32	,FIELD_PROPERTY_DEFAULT},
-		{"No"		,"INT"	,1	,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
-		{"Age"		,"INT"	,1	,FIELD_PROPERTY_DEFAULT},
-		{"Gender"	,"CHAR"	,1	,FIELD_PROPERTY_DEFAULT},
-		{"Grade"	,"INT"	,1	,FIELD_PROPERTY_DEFAULT},
-		});
+	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
+	SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
+	SQL(database, "INSERT INTO Students (\'Alice\',10012,\'cs_001\',F);");
+	SQL(database, "INSERT INTO Students (\'Bob\',10013,\'cs_002\',M);");
+	SQL(database, "INSERT INTO Students (\'Monika\',10014,\'cs_002\',F);");
+	SQL(database, "INSERT INTO Students (\'Mike\',10015,\'cs_002\',M);");
+	SQL(database, "INSERT INTO Students (\'Peter\',10016,\'cs_003\',M);");
+	SQL(database, "INSERT INTO Students (\'Max\',10017,\'cs_003\',M);");
+	SQL(database, "SELECT * FROM Students ;");
 
-	Insert(studentsTable, { "Name", "No", "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
-	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Azura", "20011", "20", "M", "3" });
-	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Monika", "20012", "20", "F", "3" });
-	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Mike", "20013", "19", "M", "2" });
-	Insert(studentsTable, { "Name", "No", "Age", "Gender", "Grade" }, { "Alice", "20014", "19", "F", "2" });
+	SQL(database, "CREATE TABLE Score (no int PRIMARY KEY not null ,mark float,grade char);");
+	SQL(database, "INSERT INTO Score VALUES (10011,97.5,A);");
+	SQL(database, "INSERT INTO Score VALUES (10012,92.5,A);");
+	SQL(database, "INSERT INTO Score (no) VALUES (10013);");
+	SQL(database, "INSERT INTO Score (no) VALUES (10014);");
+	SQL(database, "INSERT INTO Score (no) VALUES (10015);");
+	SQL(database, "INSERT INTO Score VALUES (10016,88,B);");
+	SQL(database, "INSERT INTO Score VALUES (10017,55,F);");
+	SQL(database, "SELECT * FROM Score ;");
 
-	Table* scoreTable = Create(database, "Score", {
-		{"Point","FLOAT",1,FIELD_PROPERTY_DEFAULT},
-		{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
-		{"Mark","INT",1,FIELD_PROPERTY_DEFAULT},
-		});
+	SQL(database, "SELECT Students.class,Students.no,Score.mark FROM Students,Score WHERE Students.no = Score.no;");
 
-	Insert(scoreTable, { "Mark", "No","Point" }, { "98", "20010","3.5" });
-	Insert(scoreTable, { "Mark","Point", "No" }, { "99", "4.5", "20011" });
-	Insert(scoreTable, { "Point","Mark", "No" }, { "3.7", "59", "20012" });
-	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
-	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
+	SQL(database, "DELETE FROM Students WHERE Students.class = \'cs_003\';");
 
+	SQL(database, "SELECT * FROM Students;");
 
-	SQL(database, "SELECT * FROM Students , Score WHERE Students.No = Score.No;");
-	SQL(database, "CREATE TABLE Classes (Name char(32) PRIMARY KEY,No int not null,Size int,avg float);");
-	SQL(database, "INSERT INTO Classes ( Name, No,Size) VALUES (\"class_1\" ,10021 ,45);");
-	SQL(database, "INSERT INTO Classes VALUES (\"class_2\" ,10022 ,33,1.25);");
-	SQL(database, "SELECT * FROM Classes;");
-	SQL(database, "Drop table Classes;");
+	SQL(database, "DELETE FROM Students;");
+	SQL(database, "DELETE * FROM Students;");
 
-	for (auto i = database.begin(); i != database.end(); i++)
-	{
-		delete i->second;
-	}
-
-
+	SQL(database, "DROP TABLE Students;");
+	SQL(database, "DROP TABLE Score;");
 
 	_CrtDumpMemoryLeaks();
-	return 0;
-	//From(database, { "Score" ,"Students" })->Print();
 
-	//Drop(database, "Score");
-
-	//DB Loaddb = DB();
-	//LoadDatabase("TestDataBase.hex", &Loaddb);
-	//Create(Loaddb, "Class", { {"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK} });
-
-	//auto start = clock();
-	//Table* crossJoin = new Table();
-	//Table* ls[] = { studentsTable, scoreTable };
-
-	//auto times = 1;
-	//for (int i = 0; i < times; ++i) {
-	//	//delete crossJoin;
-	//	//crossJoin = From(2, ls);
-
-	//	//memcpy(studentRow + studentTable->TableField[1]->Offset, &no, studentTable->TableField[1]->FieldSize);
-
-	//	//studentTable->InsertData(studentRow);
-	//	//studentTable->DeleteData(0);
-	//}
-	//auto end = clock();
-	//printf("Time Cost %lf ms \n", (double)(end - start) / times);
-
-	//Loaddb["Students"]->Print();
-	//Loaddb["Score"]->Print();
-
-	//crossJoin = From(Loaddb, { "Students","Score" });
-	//crossJoin->Print();
-	//auto Scores = Select(Where(crossJoin, __connect_on_no), { "Students.Name", "Students.No","Score.Score" });
-	//Scores->Print();
-
-
-	////crossJoin->DeleteData(1);
-	////crossJoin->Print();
-
-
-
-	//auto ss = crossJoin->MakeExchangeData(0);
-	////cout << (char*)ss->Data("Students.Name") << endl;
 	return 0;
 }
 
