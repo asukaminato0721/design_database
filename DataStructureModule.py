@@ -79,6 +79,25 @@ def SaveFile(filePath: str, database: list) -> int:
     return 0
 
 
+def Create(name: str, fieldlist: list, datalist: list) -> Table:
+    if(FindTable(name) != None):
+        print("Error:表已存在")
+        return None
+    db = ReadFile(FILE_PATH)
+    table_1 = Table(name, fieldlist, datalist)
+    db.append(table_1)
+    SaveFile(FILE_PATH, db)
+    return table_1
+
+
+def Drop(name: str):
+    db = ReadFile(FILE_PATH)
+    for tName in db:
+        if(tName.TableName == name):
+            db.remove(tName)
+    SaveFile(FILE_PATH, db)
+
+
 def From(*tables: Table) -> Table:
     """
     Calculating Cartesian product of `tables1,[tables2,tables3,...]`
@@ -179,9 +198,19 @@ def Insert(table: Table, row: tuple) -> Table:
         for f in table.TableField:
             if f.FieldIsPK == True:
                 pkIndex = table.TableField.index(f)
-
+        for data in table.TableData:
+            if(row[pkIndex]==data[pkIndex]):
+                print("Error:插入重复数据")
+                return None
         table.TableData.append(row)
         table.TableData.sort(key=lambda tup: tup[pkIndex])
+        db = ReadFile(FILE_PATH)
+        for tName in db:
+            if(tName.TableName == table.TableName):
+                temp = db.index(tName)
+                db.remove(tName)
+                db.insert(temp, table)
+                SaveFile(FILE_PATH, db)
         return table
     else:
         print("Error: 插入数据与属性个数不符")
@@ -207,10 +236,17 @@ def Delete(table: Table, constraints) -> Table:
         if(constraints(line) == False):
             rowsData.append(tableRow)
     table.TableData = rowsData
+    db = ReadFile(FILE_PATH)
+    for tName in db:
+        if(tName.TableName == table.TableName):
+            temp = db.index(tName)
+            db.remove(tName)
+            db.insert(temp, table)
+            SaveFile(FILE_PATH, db)
     return table
 
 
-def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
+def Update(table: Table, fieldlist: list, valuelist: list, constraints) -> Table:
     """
     Update `table` set field1=value1,field2=value2,... where fields fit `constraints`\n
     `constraints` should be a lambda expresssion\n
@@ -233,10 +269,18 @@ def Update(table: Table, fieldlist, valuelist, constraints) -> Table:
         else:
             temp = list(tableRow)
             for fName in fieldlist:
-                temp[fieldName.index(fName)] = valuelist[fieldlist.index(fName)]
+                temp[fieldName.index(
+                    fName)] = valuelist[fieldlist.index(fName)]
             rowsData.append(tuple(temp))
     table.TableData = rowsData
     table.TableData.sort(key=lambda tup: tup[pkIndex])
+    db = ReadFile(FILE_PATH)
+    for tName in db:
+        if(tName.TableName == table.TableName):
+            temp = db.index(tName)
+            db.remove(tName)
+            db.insert(temp, table)
+            SaveFile(FILE_PATH, db)
     return table
 
 
@@ -244,6 +288,8 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
+    if(table == None):
+        return None
     print(f'[Table : {table.TableName}]')
     for cols in table.TableField:
         print(f"{cols.FieldName:>14}", end='')
@@ -256,68 +302,119 @@ def PrintTable(table: Table) -> None:
     return
 
 
-def _Test():
+def FindTable(name: str) -> Table:
     db = ReadFile(FILE_PATH)
-    table_1 = Table('Student',
-                    [
-                        Field('Name', DataType.TEXT, False, True),
-                        Field('No', DataType.INTERGER, True, False),
-                        Field('Gender', DataType.TEXT, False, True)
-                    ],
-                    [
-                        ('Mike', 10011, 'M'),
-                        ('Louise', 10012, 'M'),
-                        ('Monika', 10013, 'F'),
-                        ('Jason', 10014, 'M'),
-                        ('Alice', 10015, 'F'),
-                        ('Ulrica', 10016, 'F'),
-                        ('Bill', 10017, 'F'),
-                        ('Alex', 10018, 'M'),
-                        ('Jeb', 10019, 'F'),
-                        ('Max', 10020, 'M'),
-                    ]
-                    )
-    table_2 = Table('Score',
-                    [
-                        Field('No', DataType.INTERGER, True, False),
-                        Field('Score', DataType.INTERGER, False, True)
-                    ],
-                    [
-                        (10011, 89),
-                        (10012, 92),
-                        (10013, 99),
-                        (10014, 77),
-                        (10015, 52),
-                        (10016, 55),
-                        (10017, 87),
-                        (10018, 80),
-                        (10019, 91),
-                        (10020, 100),
-                    ]
-                    )
+    table = Table()
+    for tName in db:
+        if(tName.TableName == name):
+            table = tName
+            return table
+    return None
 
-    db = [table_1, table_2]
+
+def _Test():
+    # db = ReadFile(FILE_PATH)
+    # table_1 = Table('Student',
+    #                 [
+    #                     Field('Name', DataType.TEXT, False, True),
+    #                     Field('No', DataType.INTERGER, True, False),
+    #                     Field('Gender', DataType.TEXT, False, True)
+    #                 ],
+    #                 [
+    #                     ('Mike', 10011, 'M'),
+    #                     ('Louise', 10012, 'M'),
+    #                     ('Monika', 10013, 'F'),
+    #                     ('Jason', 10014, 'M'),
+    #                     ('Alice', 10015, 'F'),
+    #                     ('Ulrica', 10016, 'F'),
+    #                     ('Bill', 10017, 'F'),
+    #                     ('Alex', 10018, 'M'),
+    #                     ('Jeb', 10019, 'F'),
+    #                     ('Max', 10020, 'M'),
+    #                 ]
+    #                 )
+    # table_2 = Table('Score',
+    #                 [
+    #                     Field('No', DataType.INTERGER, True, False),
+    #                     Field('Score', DataType.INTERGER, False, True)
+    #                 ],
+    #                 [
+    #                     (10011, 89),
+    #                     (10012, 92),
+    #                     (10013, 99),
+    #                     (10014, 77),
+    #                     (10015, 52),
+    #                     (10016, 55),
+    #                     (10017, 87),
+    #                     (10018, 80),
+    #                     (10019, 91),
+    #                     (10020, 100),
+    #                 ]
+    #                 )
+
+    # db = [table_1, table_2]
 
     # DML
+    """
+                        FieldName FieldType FieldIsPK FieldAllowNull
+    CREATE TABLE Student(Name,    TEXT,     False,    True,
+                        No,       INTERGER, True,     False,
+                        Gender,   TEXT,     False,    True)
 
+    """
+    # Drop('Student')
+    # Drop('Score')
+    table_1 = Create('Student', [
+        Field('Name', DataType.TEXT, False, True),
+        Field('No', DataType.INTERGER, True, False),
+        Field('Gender', DataType.TEXT, False, True)
+    ],
+        [
+        ('Mike', 10011, 'M'),
+        ('Louise', 10012, 'M'),
+        ('Monika', 10013, 'F'),
+        ('Jason', 10014, 'M'),
+        ('Alice', 10015, 'F'),
+        ('Ulrica', 10016, 'F'),
+        ('Bill', 10017, 'F'),
+        ('Alex', 10018, 'M'),
+        ('Jeb', 10019, 'F'),
+        ('Max', 10020, 'M'),
+    ])
+    table_2 = Create('Score',
+                     [
+                         Field('No', DataType.INTERGER, True, False),
+                         Field('Score', DataType.INTERGER, False, True)
+                     ],
+                     [
+                         (10011, 89),
+                         (10012, 92),
+                         (10013, 99),
+                         (10014, 77),
+                         (10015, 52),
+                         (10016, 55),
+                         (10017, 87),
+                         (10018, 80),
+                         (10019, 91),
+                         (10020, 100),
+                     ]
+                     )
+    PrintTable(FindTable('Student'))
+    PrintTable(FindTable('Score'))
     # SELECT Name,Score,No FROM Student,Score WHERE Student.No=Score.No and Score.Score>=60
-
-    PrintTable(table_1)
-    PrintTable(table_2)
-    PrintTable(Select(Where(From(table_1, table_2),
+    PrintTable(Select(Where(From(FindTable('Student'), FindTable('Score')),
                             lambda line: line['Student.No'] == line['Score.No'] and line['Score.Score'] >= 60), ['Student.No', 'Student.Name', 'Score.Score']))
 
     # DELETE FROM table_2 WHERE table_2.Score < 90
-    PrintTable(Delete(table_2, lambda line: line['Score'] < 90))
+    PrintTable(Delete(FindTable('Score'), lambda line: line['Score'] < 90))
 
     # INSERT INTO table_2 VALUES (20012,59)
-    PrintTable(Insert(table_2, (20012, 59)))
+    PrintTable(Insert(FindTable('Score'), (20012, 59)))
 
     # UPDATE table_2 SET No='20019',SCORE='100' WHERE No='10019'
-    PrintTable(Update(table_2, ['No', 'Score'], [20019, 100],
-                      lambda line: line['No'] == 10019))
-
-    SaveFile(FILE_PATH, db)
+    PrintTable(Update(FindTable('Score'), ['No', 'Score'], [
+               20019, 100], lambda line: line['No'] == 10019))
+    # SaveFile(FILE_PATH, db)
     pass
 
 
