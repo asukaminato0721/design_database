@@ -43,19 +43,21 @@ def searchOperator(s):
 
 
 # 判断是否为字母
-def IsLetter(letter):
-    if ('a' <= letter <= 'z') or ('A' <= letter <= 'Z'):
-        return True
-    else:
-        return False
+def IsLetter(letter:str)->bool:
+    # if ('a' <= letter <= 'z') or ('A' <= letter <= 'Z'):
+    #     return True
+    # else:
+    #     return False
+    return letter.isalpha()
 
 
 # 判断是否为数字
-def IsDigit(digit):
-    if '0' <= digit <= '9':
-        return True
-    else:
-        return False
+def IsDigit(digit:str)->bool:
+    # if '0' <= digit <= '9':
+    #     return True
+    # else:
+    #     return False
+    return digit.isdigit()
 
 
 # 编译预处理，取出无用的字符和注释
@@ -88,13 +90,16 @@ def filterResource(r, pProject):
     return r
 
 
-def checkCalc(ch):
-    if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
-            or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
-            or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
-        return True
-    else:
-        return False
+def checkCalc(ch:str)->bool:
+    # if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
+    #         or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
+    #         or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
+    #     return True
+    # else:
+    #     return False
+    return ch in { '+' , '-' , '*' , '/' , ';' , '(' , ')' , '^'
+            , ',' , '\"' , '\'' , '~' , '#' , '%' , '['
+            , ']' , '{' , '}' , '\\' , '.' , '\?' , ':'}
 
 
 # 分析子程序，算法核心
