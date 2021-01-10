@@ -3,7 +3,7 @@ import json
 # 词法分析 读取sql.txt文件中的程序进行分析
 # 1-50 表示保留字种别码，在这里添加系统的关键字
 # 部分还是C++程序的关键字保留字，可以删除
-#完善SQL关键字
+# 完善SQL关键字
 reserveWord = [
     "auto", "break", "case", "char", "const", "continue",
     "default", "do", "double", "else", "enum", "extern",
@@ -11,8 +11,8 @@ reserveWord = [
     "register", "return", "short", "signed", "sizeof", "static",
     "struct", "switch", "typedef", "union", "unsigned", "void",
     "volatile", "while", "bool", "return", "false", "else", "char",
-    "select", "from", "where","and","or","not",
-    "as","between"]
+    "select", "from", "where", "and", "or", "not",
+    "as", "between"]
 # 51-90表示操作符种别码 这里一共36种
 operatorOrDelimiter = [
     "+", "-", "*", "/", "<", "<=", ">", ">=", "=", "==",
@@ -20,6 +20,8 @@ operatorOrDelimiter = [
     "&&", "|", "||", "%", "~", "<<", ">>", "[", "]", "{",
     "}", "\\", ".", "\\?", ":", "!"
 ]
+
+
 # 99 表示常数种别码
 # 100 表示标识符种别码
 
@@ -36,7 +38,7 @@ def searchReserve(s):
 def searchOperator(s):
     for i in range(len(operatorOrDelimiter)):
         if getStr(s) == operatorOrDelimiter[i]:
-            return 50+i
+            return 50 + i
     return -1
 
 
@@ -68,6 +70,10 @@ def filterResource(r, pProject):
             while r[i] != '\n':
                 # print("注释", i)
                 i += 1
+        # 添加sql中的单行注释
+        if r[i] == '-' and r[i + 1] == '-':
+            while r[i] != '\n':
+                i += 1
         elif r[i] == '/' and r[i + 1] == '*':
             i += 2
             while r[i] != '*' or r[i + 1] != '/':
@@ -88,6 +94,16 @@ def filterResource(r, pProject):
     return r
 
 
+<<<<<<< HEAD
+# 识别界符和运算符
+def checkCalc(ch):
+    if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
+            or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
+            or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
+        return True
+    else:
+        return False
+=======
 def checkCalc(ch:str)->bool:
     # if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
     #         or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
@@ -98,6 +114,7 @@ def checkCalc(ch:str)->bool:
     return ch in { '+' , '-' , '*' , '/' , ';' , '(' , ')' , '^'
             , ',' , '\"' , '\'' , '~' , '#' , '%' , '['
             , ']' , '{' , '}' , '\\' , '.' , '\?' , ':'}
+>>>>>>> 9236e3353bae381dfed90d825199b41a3e945aff
 
 
 # 分析子程序，算法核心
@@ -259,7 +276,7 @@ def writeStr(str):
 
 def getStr(token):
     str = ""
-    for i in range(len(token)-1):
+    for i in range(len(token) - 1):
         str += token[i]
     return str
 
@@ -301,3 +318,61 @@ while syn != 0:
 for i in range(100):
     print("第%d个标识符:%s" % (i + 1, IdentifierTbl[i]))
     writeStr("第" + i + "个标识符: " + IdentifierTbl[i])
+
+
+def parse_sql() -> list:
+    result = []
+    token = []
+    syn = -1
+    pProject = 0
+    with open("sql.txt", 'r', encoding='utf-8') as f:
+        resourceProject = f.read()
+    resourceProject.__add__('\0')
+    # print("过滤前的源程序：")
+    # print(resourceProject)
+    resourceProject = filterResource(resourceProject, len(resourceProject) - 1)
+    # print("过滤后的程序为：")
+    # print(resourceProject)
+    IdentifierTbl = []
+    for i in range(1000):
+        IdentifierTbl.append("")
+    while syn != 0:
+        syn, token, pProject = Scanner(syn, resourceProject, pProject)
+        if syn == 100:
+            for i in range(1000):
+                if IdentifierTbl[i] == token:
+                    break
+                if IdentifierTbl[i] == "":
+                    IdentifierTbl[i] = token
+                    break
+            print("标识符：", getStr(token))
+            writeStr("(标识符 ," + getStr(token) + " )")
+            if len(result[-1]) == 1:
+                result[-1].append(getStr(token))
+            elif len(result[-1]) == 2:
+                result[-1][1] += getStr(token)
+            # print(result)
+        elif 1 <= syn <= len(reserveWord):
+            print("关键字:(%s , --)" % reserveWord[syn - 1])
+            writeStr("(" + reserveWord[syn - 1] + " , --)")
+            result.append([reserveWord[syn - 1]])
+        elif syn == 99:
+            print("常数：(%s , --)" % getStr(token))
+            writeStr("(常数 , " + getStr(token) + ")")
+            if len(result[-1]) == 1:
+                result[-1].append(getStr(token))
+            elif len(result[-1]) == 2:
+                result[-1][1] += getStr(token)
+        elif 50 <= syn <= 98:
+            print("(%s , --)" % operatorOrDelimiter[syn - 50])
+            writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
+            if len(result[-1]) == 1:
+                result[-1].append(getStr(token))
+            elif len(result[-1]) == 2:
+                result[-1][1] += getStr(token)
+        print(result)
+    print(1)
+
+
+out = parse_sql()
+print(out)
