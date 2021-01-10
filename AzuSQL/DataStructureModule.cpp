@@ -20,6 +20,26 @@ const Datatype BYTE = { 11, 1 };
 
 typedef map<string, Table*> DB;
 
+
+vector<string> split(const string& str, const string& delim) {
+	vector<string> res;
+	if ("" == str) return res;
+	//先将要切割的字符串从string类型转换为char*类型  
+	char* strs = new char[str.length() + 1];
+	strcpy(strs, str.c_str());
+
+	char* d = new char[delim.length() + 1];
+	strcpy(d, delim.c_str());
+
+	char* p = strtok(strs, d);
+	while (p) {
+		string s = p; //分割得到的字符串转换为string类型
+		res.push_back(s); //存入结果数组  
+		p = strtok(NULL, d);
+	}
+	return res;
+}
+
 void LogInfo(string msg, uint8_t level) {
 	if (level < 5) {
 		printf("Info( level=%d ) : %s\n", level, msg.c_str());
@@ -429,6 +449,15 @@ Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	vector<uint32_t> begin, length;
 
 	for (uint32_t i = 0; i < fieldNames.size(); ++i) {
+		if (fieldNames[i] == "*") {
+			begin.push_back(0);
+			length.push_back(pTable->TableRowSize);
+			for (uint32_t i = 0; i < pTable->TableFieldNum; ++i) {
+				auto pField = new Field(pTable->TableField[i]);
+				retTable->AddField(pField);
+				continue;
+			}
+		}
 		for (uint32_t j = 0; j < pTable->TableFieldNum; ++j) {
 			if (fieldNames[i] == pTable->TableField[j]->FieldName) {
 				begin.push_back(pTable->TableField[j]->Offset);
@@ -496,6 +525,102 @@ Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string,
 	}
 	pDatabase[pTable->TableName] = pTable;
 	return pTable;
+}
+
+void SQL(DB& db, string sql) {
+	string upperSql = sql;
+	transform(upperSql.begin(), upperSql.end(), upperSql.begin(), ::toupper);
+
+	if (upperSql.compare(0, 5, "SELECT", 0, 5) == 0) {
+		auto selectIndex = upperSql.find("SELECT");//selectIndex+7
+		auto fromIndex = upperSql.find("FROM");//fromIndex+5
+		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
+		if (whereIndex == string::npos) {
+			whereIndex = upperSql.length() - 1;
+		}
+		string select = sql.substr(selectIndex + 7, fromIndex - selectIndex - 7 - 1);
+		string from = sql.substr(fromIndex + 5, whereIndex - fromIndex - 5);
+		string where = sql.substr(whereIndex, whereIndex - sql.length() + 1);
+
+		vector<string> selectVec = split(select, ",");
+		vector<string> fromVec = split(from, ",");
+		Table* fromTable = From(db, fromVec);
+		Table* selectTable = Select(fromTable, selectVec);
+		selectTable->Print();
+		free(fromTable);
+		free(selectTable);
+	}
+	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
+		auto begin = sql.find("(");
+		auto end = sql.rfind(")");
+		string tableNamestr = sql.substr(13, begin - 12 - 2);
+		Table* pTable = new Table(tableNamestr);
+		string fieldstr = sql.substr(begin + 1, end - begin - 1);
+		auto fields = split(fieldstr, ",");
+		for (uint32_t i = 0; i < fields.size(); ++i) {
+			uint32_t size = 0;
+
+			auto UpperField = fields[i];
+			transform(UpperField.begin(), UpperField.end(), UpperField.begin(), ::toupper);
+
+
+			auto sizebegin = fields[i].find("(");
+			auto sizeend = fields[i].find(")");
+			if (sizebegin == string::npos) {
+				size = 1;
+			}
+			else {
+				size = atoi(fields[i].substr(sizebegin + 1, sizeend - sizebegin - 1).c_str());
+				fields[i].erase(sizebegin, sizeend - sizebegin + 1);
+			}
+			auto fieldInfo = split(fields[i], " ");
+			transform(fieldInfo[1].begin(), fieldInfo[1].end(), fieldInfo[1].begin(), ::toupper);
+			const Datatype* pType = nullptr;
+			if (fieldInfo[1] == "INT") {
+				pType = &INT;
+			}
+			else if (fieldInfo[1] == "FLOAT") {
+				pType = &FLOAT;
+			}
+			else if (fieldInfo[1] == "CHAR") {
+				pType = &CHAR;
+			}
+			else if (fieldInfo[1] == "BYTE") {
+				pType = &BYTE;
+			}
+			else {
+				LogInfo("Unknown data type.", 14);
+				return;
+			}
+			uint32_t fieldProp = FIELD_PROPERTY_DEFAULT;
+			if (UpperField.find("PRIMARY KEY") != string::npos) {
+				fieldProp = fieldProp | FIELD_PROPERTY_PK;
+			}
+			if (UpperField.find("NOT NULL") != string::npos) {
+				fieldProp = fieldProp | FIELD_PROPERTY_NOT_NULL;
+			}
+
+			Field* pField = new Field(fieldInfo[0], *pType, size, fieldProp);
+			pTable->AddField(pField);
+		}
+		db[pTable->TableName] = pTable;
+	}
+	else if (upperSql.compare(0, 12, "INSERT INTO", 0, 12) == 0) {
+
+	}
+}
+
+
+void Drop(DB& pDatabase, const string& tableName) {
+	auto iter = pDatabase.find(tableName);
+	if (iter == pDatabase.end()) {
+		LogInfo("Can not find such Table", 9);
+		return;
+	}
+	auto pTable = iter->second;
+	delete pTable;
+	pDatabase.erase(iter);
+	return;
 }
 
 void StoreDatabase(string filePath, DB* database) {
@@ -627,11 +752,11 @@ int main() {
 	DB database = DB();
 
 	auto studentsTable = Create(database, "Students", {
-		{"Name","CHAR",32,FIELD_PROPERTY_DEFAULT},
-		{"No","INT",1,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
-		{"Age","INT",1,FIELD_PROPERTY_DEFAULT},
-		{"Gender","CHAR",1,FIELD_PROPERTY_DEFAULT},
-		{"Grade","INT",1,FIELD_PROPERTY_DEFAULT},
+		{"Name"		,"CHAR"	,32	,FIELD_PROPERTY_DEFAULT},
+		{"No"		,"INT"	,1	,FIELD_PROPERTY_INDEX | FIELD_PROPERTY_PK},
+		{"Age"		,"INT"	,1	,FIELD_PROPERTY_DEFAULT},
+		{"Gender"	,"CHAR"	,1	,FIELD_PROPERTY_DEFAULT},
+		{"Grade"	,"INT"	,1	,FIELD_PROPERTY_DEFAULT},
 		});
 
 	Insert(studentsTable, { "Name", "No", "Gender", "Age","Grade" }, { "Peter", "20010",  "M","19", "2" });
@@ -653,7 +778,13 @@ int main() {
 	Insert(scoreTable, { "Mark", "No" }, { "53", "20013" });
 	Insert(scoreTable, { "Mark", "No" }, { "97", "20014" });
 
+	SQL(database, "SELECT * FROM Students,Score;");
+	SQL(database, "CREATE TABLE Classes (Name char(32) PRIMARY KEY,No int not null,Size int,avg float);");
+
+	return 0;
 	From(database, { "Score" ,"Students" })->Print();
+
+	Drop(database, "Score");
 
 	DB Loaddb = DB();
 	LoadDatabase("TestDataBase.hex", &Loaddb);
