@@ -1,4 +1,4 @@
-ï»¿#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 
 #define _CRTDBG_MAP_ALLOC
@@ -11,7 +11,7 @@ using namespace std;
 
 
 // https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
-// æ ¹æ®è¿™ä¸ªé“¾æ¥ï¼Œconst å¯ä»¥åˆ 
+// ¸ù¾İÕâ¸öÁ´½Ó£¬const ¿ÉÒÔÉ¾
 struct Datatype
 {
 	uint8_t id;
@@ -35,7 +35,7 @@ string strip(const string& str) {
 vector<string> split(const string& str, const string& delim) {
 	vector<string> res;
 	if ("" == str) return res;
-	//å…ˆå°†è¦åˆ‡å‰²çš„å­—ç¬¦ä¸²ä»stringç±»å‹è½¬æ¢ä¸ºchar*ç±»å‹  
+	//ÏÈ½«ÒªÇĞ¸îµÄ×Ö·û´®´ÓstringÀàĞÍ×ª»»Îªchar*ÀàĞÍ  
 	char* strs = new char[str.length() + 1];
 	strcpy(strs, str.c_str());
 
@@ -44,9 +44,9 @@ vector<string> split(const string& str, const string& delim) {
 
 	char* p = strtok(strs, d);
 	while (p) {
-		string s = p; //åˆ†å‰²å¾—åˆ°çš„å­—ç¬¦ä¸²è½¬æ¢ä¸ºstringç±»å‹
+		string s = p; //·Ö¸îµÃµ½µÄ×Ö·û´®×ª»»ÎªstringÀàĞÍ
 		s = strip(s);
-		res.push_back(s); //å­˜å…¥ç»“æœæ•°ç»„  
+		res.push_back(s); //´æÈë½á¹ûÊı×é  
 		p = strtok(NULL, d);
 	}
 	delete[] strs;
@@ -66,36 +66,9 @@ void LogInfo(string msg, uint8_t level) {
 	}
 }
 
-/// <summary>
-/// æ•°æ®äº¤æ¢æ ¼å¼ï¼ˆpDataæ˜¯å¼•ç”¨ï¼‰
-/// </summary>
-class ExchangeData
-{
-public:
-	struct exData
-	{
-		uint8_t* pData;
-		uint32_t length;
-	};
-	map<string, ExchangeData::exData*>DataTuple;
-	~ExchangeData()
-	{
-		auto iter = this->DataTuple.begin();
-		for (iter = this->DataTuple.begin(); iter != this->DataTuple.end(); iter++) {
-			free(iter->second);
-		}
-		this->DataTuple.clear();
-	}
-	uint8_t* Data(string key) {
-		return this->DataTuple[key]->pData;
-	}
-	uint32_t Length(string key) {
-		return this->DataTuple[key]->length;
-	}
 
-};
 
-//å±æ€§å+ç±»å‹å·+é•¿åº¦+æ ‡ç­¾
+//ÊôĞÔÃû+ÀàĞÍºÅ+³¤¶È+±êÇ©
 #define FIELD_SIZE (MAX_FIELD_NAME_LEN+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
 class Field
 {
@@ -127,7 +100,7 @@ public:
 	uint32_t Offset = 0;
 };
 
-//è¡¨å+å±æ€§æ•°é‡+æ•°æ®æ•°é‡+æ•°æ®é•¿åº¦
+//±íÃû+ÊôĞÔÊıÁ¿+Êı¾İÊıÁ¿+Êı¾İ³¤¶È
 #define TABLE_HEAD_SIZE (MAX_TABLE_NAME_LEN+sizeof(uint32_t)+sizeof(uint64_t)+sizeof(uint32_t))
 
 class Table
@@ -181,10 +154,10 @@ public:
 	}
 
 	/// <summary>
-	/// å°†æ•°æ®æ’å…¥è¡¨ä¸­ï¼ˆæ·±æ‹·è´ï¼‰
+	/// ½«Êı¾İ²åÈë±íÖĞ£¨Éî¿½±´£©
 	/// </summary>
-	/// <param name="DataTuple">æŒ‡å‘æ•°æ®å¤´çš„æŒ‡é’ˆ</param>
-	/// <returns>è¿”å›è¯¥è¡¨</returns>
+	/// <param name="DataTuple">Ö¸ÏòÊı¾İÍ·µÄÖ¸Õë</param>
+	/// <returns>·µ»Ø¸Ã±í</returns>
 	Table* InsertData(uint8_t* data) {
 		uint8_t* pDataRow = (uint8_t*)calloc(this->TableRowSize, sizeof(uint8_t));
 		if (pDataRow == NULL) {
@@ -196,10 +169,10 @@ public:
 		return this;
 	}
 	/// <summary>
-	/// åˆ é™¤è¡¨ä¸­çš„æ•°æ®
+	/// É¾³ı±íÖĞµÄÊı¾İ
 	/// </summary>
-	/// <param name="rowIndex">å¾…åˆ é™¤çš„è¡Œå·</param>
-	/// <returns>è¿”å›è¯¥è¡¨</returns>
+	/// <param name="rowIndex">´ıÉ¾³ıµÄĞĞºÅ</param>
+	/// <returns>·µ»Ø¸Ã±í</returns>
 	Table* DeleteData(uint64_t rowIndex) {
 		auto p = begin(this->Data) + rowIndex;
 		free(*p);
@@ -223,7 +196,7 @@ public:
 			return pRet;
 		}
 
-		//TODO é»˜è®¤åœ¨å…³é”®å­—ä¹‹é—´ä¼šæ·»åŠ ç©ºæ ¼ï¼Œè®¡åˆ’è‡ªåŠ¨æ·»åŠ ç©ºæ ¼
+		//TODO Ä¬ÈÏÔÚ¹Ø¼ü×ÖÖ®¼ä»áÌí¼Ó¿Õ¸ñ£¬¼Æ»®×Ô¶¯Ìí¼Ó¿Õ¸ñ
 		string UpperWhere = whereStr;
 		transform(UpperWhere.begin(), UpperWhere.end(), UpperWhere.begin(), ::toupper);
 
@@ -509,7 +482,7 @@ public:
 		res << "========================================================" << "\r\n";
 		res << "[Table Name : " << this->TableName << "]" << "\r\n";
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			res << setw(15) << this->TableField[i]->FieldName << endl;
+			res << setw(15) << this->TableField[i]->FieldName;
 		}
 		res << "\r\n";
 		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
@@ -548,12 +521,12 @@ public:
 };
 
 /// <summary>
-/// å‘è¡¨ä¸­æ’å…¥æ•°æ®
+/// Ïò±íÖĞ²åÈëÊı¾İ
 /// </summary>
-/// <param name="pTable">å¾…æ’å…¥çš„è¡¨</param>
-/// <param name="fieldNameList">åˆ—åï¼ˆvectorï¼‰</param>
-/// <param name="valuesList">å€¼ï¼ˆvectorï¼‰</param>
-/// <returns>æ’å…¥åçš„è¡¨</returns>
+/// <param name="pTable">´ı²åÈëµÄ±í</param>
+/// <param name="fieldNameList">ÁĞÃû£¨vector£©</param>
+/// <param name="valuesList">Öµ£¨vector£©</param>
+/// <returns>²åÈëºóµÄ±í</returns>
 Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<string> valuesList) {
 	if (valuesList.size() != fieldNameList.size()) {
 		LogInfo("Field number and Values number not match.", 8);
@@ -597,11 +570,11 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 }
 
 /// <summary>
-/// ç¬›å¡å°”ç§¯
+/// µÑ¿¨¶û»ı
 /// </summary>
-/// <param name="tableNum">å‚ä¸è¿ç®—çš„è¡¨æ•°é‡</param>
-/// <param name="tables">å‚ä¸è¿ç®—çš„è¡¨æŒ‡é’ˆ</param>
-/// <returns>ç¬›å¡å°”ç§¯ç»“æœ</returns>
+/// <param name="tableNum">²ÎÓëÔËËãµÄ±íÊıÁ¿</param>
+/// <param name="tables">²ÎÓëÔËËãµÄ±íÖ¸Õë</param>
+/// <returns>µÑ¿¨¶û»ı½á¹û</returns>
 Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 	for (size_t i = 0; i < tableNameList.size(); i++)
 	{
@@ -676,10 +649,10 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 }
 
 /// <summary>
-/// é€šè¿‡`constraint`æ¡ä»¶ç­›é€‰è¡Œ
+/// Í¨¹ı`constraint`Ìõ¼şÉ¸Ñ¡ĞĞ
 /// </summary>
-/// <param name="constraint">çº¦æŸæ¡ä»¶</param>
-/// <returns>æŸ¥è¯¢ç»“æœ</returns>
+/// <param name="constraint">Ô¼ÊøÌõ¼ş</param>
+/// <returns>²éÑ¯½á¹û</returns>
 Table* Where(Table* pTable, const vector<uint64_t>& index) {
 	Table* retTable = new Table();
 	retTable->TableName = pTable->TableName + "'";
@@ -694,10 +667,10 @@ Table* Where(Table* pTable, const vector<uint64_t>& index) {
 }
 
 /// <summary>
-/// é€šè¿‡`constraint`æ¡ä»¶åˆ é™¤è¡Œ
+/// Í¨¹ı`constraint`Ìõ¼şÉ¾³ıĞĞ
 /// </summary>
-/// <param name="constraint">çº¦æŸæ¡ä»¶</param>
-/// <returns>åˆ é™¤ç»“æœ</returns>
+/// <param name="constraint">Ô¼ÊøÌõ¼ş</param>
+/// <returns>É¾³ı½á¹û</returns>
 Table* Delete(Table* pTable, const vector<uint64_t>& index) {
 	for (int64_t i = index.size() - 1; i >= 0; --i) {
 		pTable->DeleteData(index[i]);
@@ -706,10 +679,10 @@ Table* Delete(Table* pTable, const vector<uint64_t>& index) {
 }
 
 /// <summary>
-/// é€‰æ‹©è¡¨ä¸­è‹¥å¹²åˆ—
+/// Ñ¡Ôñ±íÖĞÈô¸ÉÁĞ
 /// </summary>
-/// <param name="fieldNames">å±æ€§ååˆ—è¡¨</param>
-/// <returns>æŠ•å½±åçš„ç»“æœ</returns>
+/// <param name="fieldNames">ÊôĞÔÃûÁĞ±í</param>
+/// <returns>Í¶Ó°ºóµÄ½á¹û</returns>
 Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	Table* retTable = new Table();
 	retTable->TableName = pTable->TableName + "'";
@@ -782,7 +755,7 @@ Table* Update(Table* pTable, const vector<string>& Fields, const vector<string>&
 				strcpy((char*)buff, Datas[i].c_str());
 			}
 			else {
-				memcpy(buff, Datas[i].c_str(), size);//æˆªæ–­
+				memcpy(buff, Datas[i].c_str(), size);//½Ø¶Ï
 			}
 		}
 		else if (typeId == FieldType_BYTE.id) {
@@ -868,13 +841,13 @@ void StoreDatabase(string filePath, const DB& database) {
 			return;
 		}
 		uint64_t rowNumber = table->Data.size();
-		//å†™å…¥è¡¨å
+		//Ğ´Èë±íÃû
 		strcpy((char*)buff, table->TableName.c_str());
-		//å±æ€§æ•°é‡uint32_t
+		//ÊôĞÔÊıÁ¿uint32_t
 		memcpy(buff + MAX_TABLE_NAME_LEN, &table->TableFieldNum, sizeof(table->TableFieldNum));
-		//è¡Œæ•°uint64_t
+		//ĞĞÊıuint64_t
 		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum), &rowNumber, sizeof(rowNumber));
-		//æ•°æ®é•¿åº¦uint32_t
+		//Êı¾İ³¤¶Èuint32_t
 		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum) + sizeof(rowNumber), &table->TableRowSize, sizeof(table->TableRowSize));
 		fs.write((const char*)buff, TABLE_HEAD_SIZE);
 		free(buff);
@@ -886,13 +859,13 @@ void StoreDatabase(string filePath, const DB& database) {
 				LogInfo("Unable to allocate memory", 12);
 				return;
 			}
-			//å†™å…¥å±æ€§å
+			//Ğ´ÈëÊôĞÔÃû
 			strcpy((char*)buff, field->FieldName.c_str());
-			//å†™å…¥ç±»å‹å·uint8_t
+			//Ğ´ÈëÀàĞÍºÅuint8_t
 			memcpy(buff + MAX_FIELD_NAME_LEN, &field->FieldType.id, sizeof(field->FieldType.id));
-			//å†™å…¥é•¿åº¦uint32_t
+			//Ğ´Èë³¤¶Èuint32_t
 			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id), &field->FieldSize, sizeof(field->FieldSize));
-			//å†™å…¥æ ‡ç­¾uint32_t
+			//Ğ´Èë±êÇ©uint32_t
 			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id) + sizeof(field->FieldSize), &field->FieldProperty, sizeof(field->FieldProperty));
 			fs.write((const char*)buff, FIELD_SIZE);
 			free(buff);
@@ -907,6 +880,10 @@ void StoreDatabase(string filePath, const DB& database) {
 }
 
 void LoadDatabase(string filePath, DB& database) {
+	for (auto iter = database.begin(); iter != database.end(); ++iter) {
+		delete iter->second;
+	}
+	database.clear();
 	ifstream fs;
 	fs.open(filePath, ios::in | ios::binary);
 	while (fs.peek() != EOF)
@@ -916,14 +893,14 @@ void LoadDatabase(string filePath, DB& database) {
 		uint32_t TableFieldNum;
 		uint64_t RowNumber;
 		uint32_t RowSize;
-		//è¯»å–è¡¨å
+		//¶ÁÈ¡±íÃû
 		fs.read(pTableName, MAX_TABLE_NAME_LEN);
 		pTable->TableName = pTableName;
-		//å±æ€§æ•°é‡uint32_t
+		//ÊôĞÔÊıÁ¿uint32_t
 		fs.read((char*)&TableFieldNum, sizeof(pTable->TableFieldNum));
-		//è¡Œæ•°uint64_t
+		//ĞĞÊıuint64_t
 		fs.read((char*)&RowNumber, sizeof(RowNumber));
-		//æ•°æ®é•¿åº¦uint32_t
+		//Êı¾İ³¤¶Èuint32_t
 		fs.read((char*)&RowSize, sizeof(RowSize));
 		for (uint32_t i = 0; i < TableFieldNum; i++)
 		{
@@ -932,9 +909,9 @@ void LoadDatabase(string filePath, DB& database) {
 			uint32_t FieldSize = 0;
 			uint32_t prop = 0;
 			const Datatype* datatype = nullptr;
-			//å±æ€§å
+			//ÊôĞÔÃû
 			fs.read(FieldName, MAX_FIELD_NAME_LEN);
-			//ç±»å‹å·uint8_t
+			//ÀàĞÍºÅuint8_t
 			fs.read((char*)&type, sizeof(uint8_t));
 			if (type == FieldType_INT.id) {
 				datatype = &FieldType_INT;
@@ -952,9 +929,9 @@ void LoadDatabase(string filePath, DB& database) {
 				LogInfo("Unknown data type.", 14);
 				return;
 			}
-			//é•¿åº¦uint32_t
+			//³¤¶Èuint32_t
 			fs.read((char*)&FieldSize, sizeof(uint32_t));
-			//æ ‡ç­¾uint32_t
+			//±êÇ©uint32_t
 			fs.read((char*)&prop, sizeof(uint32_t));
 
 			Field* pField = new Field(FieldName, *datatype, FieldSize / datatype->size, prop);
@@ -1086,7 +1063,7 @@ string SQL(DB& db, string sql) {
 		auto LastLeftParenthese = sql.find_last_of("(");
 		auto FirstRightParenthese = sql.find_first_of(")");
 		auto LastRightParenthese = sql.find_last_of(")");
-		if (FirstLeftParenthese == LastLeftParenthese) {//å…¨æ’å…¥
+		if (FirstLeftParenthese == LastLeftParenthese) {//È«²åÈë
 			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
 			Table* pTable = db[tableName];
 			vector<string> allField;
@@ -1096,7 +1073,7 @@ string SQL(DB& db, string sql) {
 			}
 			Insert(db[tableName], allField, split(datastr, ","));
 		}
-		else {//æŒ‡å®šæ’å…¥
+		else {//Ö¸¶¨²åÈë
 			string fieldstr = sql.substr(FirstLeftParenthese + 1, FirstRightParenthese - FirstLeftParenthese - 1);
 			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
 			Insert(db[tableName], split(fieldstr, ","), split(datastr, ","));
@@ -1177,8 +1154,17 @@ string SQL(DB& db, string sql) {
 	return "Unknown SQL.";
 }
 
-int __main() {
+int main() {
 	DB database = DB();
+
+	while (true)
+	{
+		string input;
+		getline(cin, input);
+		cout << SQL(database, input) << endl;
+	}
+
+	return 0;
 
 	SQL(database, "LOAD TestDataBase.hex;");
 
