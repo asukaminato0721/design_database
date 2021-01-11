@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+# 静态文件服务
+from django.conf.urls.static import static
 
 urlpatterns = [
     path("modify/", include("modify_database.urls")),
@@ -25,4 +27,4 @@ urlpatterns = [
     path("show_new/", include("show_database.urls_new")),
     path("admin/", admin.site.urls),
     path("", include("show_database.urls")),
-]
+]+ static("/", document_root="./templates")

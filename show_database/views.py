@@ -12,7 +12,7 @@ def show(request: HttpRequest, db: str = "") -> HttpResponse:
     values = [[x.values() for x in table] for table in all_tables.values()]
     return render(
         request,
-        "show.html",
+        "index.html",
         context={
             "tables": zip(names, headings, values),
             "all_database": all_database,
