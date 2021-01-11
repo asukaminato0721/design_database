@@ -127,3 +127,23 @@ void CreateUser()
     fout << u.name << " " << u.password << " " << u.right_super << " " << u.right_ordinary << "\n" << endl;
     fout.close();
 }
+
+void CreateGrant_op(string op, int &flag)//½¨Á¢ÊÚÈ¨
+{
+    string s = "grant ";
+    int f = 1;
+    for(int i = 0; i < s.length(); ++i)
+    {
+        if(op[i] != s[i])
+        {
+            f = 0; break;
+        }
+    }
+    if(f)
+    {
+        flag = 8;
+        CreatGrant(op);
+    }
+
+    return;
+}
