@@ -6,6 +6,8 @@ import pathlib
 # 1-50 表示保留字种别码，在这里添加系统的关键字
 # 部分还是C++程序的关键字保留字，可以删除
 # 完善SQL关键字
+# https://black.readthedocs.io/en/stable/the_black_code_style.html
+# fmt: off
 reserveWord = [
     "char", "const", "default", "double", "else", "float", "for", "if", "int", "long",
     "void", "while", "bool", "false", "else", "char", "create", "table", "into", "key",
@@ -19,7 +21,7 @@ operatorOrDelimiter = [
     "&&", "|", "||", "%", "~", "<<", ">>", "[", "]", "{",
     "}", "\\", ".", "\\?", ":", "!"
 ]
-
+# fmt: on
 
 # 99 表示常数种别码
 # 100 表示标识符种别码
@@ -42,20 +44,12 @@ def searchOperator(s):
 
 
 # 判断是否为字母
-def IsLetter(letter:str)->bool:
-    # if ('a' <= letter <= 'z') or ('A' <= letter <= 'Z'):
-    #     return True
-    # else:
-    #     return False
+def IsLetter(letter: str) -> bool:
     return letter.isalpha()
 
 
 # 判断是否为数字
-def IsDigit(digit:str)->bool:
-    # if '0' <= digit <= '9':
-    #     return True
-    # else:
-    #     return False
+def IsDigit(digit: str) -> bool:
     return digit.isdigit()
 
 
@@ -65,44 +59,40 @@ def filterResource(r, pProject):
     count = 0
     i = 0
     while i < pProject:
-        if r[i] == '/' and r[i + 1] == '/':
-            while r[i] != '\n':
+        if r[i] == "/" and r[i + 1] == "/":
+            while r[i] != "\n":
                 # print("注释", i)
                 i += 1
         # 添加sql中的单行注释
-        if r[i] == '-' and r[i + 1] == '-':
-            while r[i] != '\n':
+        if r[i] == "-" and r[i + 1] == "-":
+            while r[i] != "\n":
                 i += 1
-        elif r[i] == '/' and r[i + 1] == '*':
+        elif r[i] == "/" and r[i + 1] == "*":
             i += 2
-            while r[i] != '*' or r[i + 1] != '/':
+            while r[i] != "*" or r[i + 1] != "/":
                 # print("注释", i)
                 i = i + 1
-                if r[i] == '$':
+                if r[i] == "$":
                     print("注释出错，没有找到*/，程序结束!!!")
                     break
             i += 2
-        elif r[i] != '\n' and r[i] != '\t' and r[i] != '\v' and r[i] != '\r':
+        elif r[i] != "\n" and r[i] != "\t" and r[i] != "\v" and r[i] != "\r":
             # print("录入", i)
             tempString.append(r[i])
             i += 1
         else:
             i += 1
-    tempString.append('\0')
+    tempString.append("\0")
     r = tempString
     return r
 
 
-def checkCalc(ch:str)->bool:
-    # if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == ';' or ch == '(' or ch == ')' or ch == '^'
-    #         or ch == ',' or ch == '\"' or ch == '\'' or ch == '~' or ch == '#' or ch == '%' or ch == '['
-    #         or ch == ']' or ch == '{' or ch == '}' or ch == '\\' or ch == '.' or ch == '\?' or ch == ':'):
-    #     return True
-    # else:
-    #     return False
+def checkCalc(ch: str) -> bool:
+    # fmt: off
     return ch in { '+' , '-' , '*' , '/' , ';' , '(' , ')' , '^'
             , ',' , '\"' , '\'' , '~' , '#' , '%' , '['
             , ']' , '{' , '}' , '\\' , '.' , '\?' , ':'}
+    # fmt: on
 
 
 # 分析子程序，算法核心
@@ -116,7 +106,7 @@ def Scanner(syn, resourseproject, pProject):
     count = 0  # count用来做token[]的指示器， 收集有用字符
     ch = resourseproject[pProject]  # ch用来作为判断使用
     # 过滤掉空格，防止程序因识别不了空格而结束
-    while ch == ' ':
+    while ch == " ":
         pProject += 1
         ch = resourseproject[pProject]
     # 每次收集前先清0，每次识别下一个单词，在开始之前，吧之前识别的清空
@@ -128,12 +118,14 @@ def Scanner(syn, resourseproject, pProject):
         pProject += 1  # 向后移动一位
         count += 1  # 单词字符数+1
         # 继续向后识别字符或数字，因为标识符可以由字符或数字组成
-        while IsLetter(resourseproject[pProject]) or IsDigit(resourseproject[pProject]):
+        while IsLetter(resourseproject[pProject]) or IsDigit(
+            resourseproject[pProject]
+        ):
             # 收集字符
             token.append(resourseproject[pProject])  # 收集一个字符
             count += 1
             pProject += 1
-        token.append('\0')
+        token.append("\0")
         # 查表找到种别码
         syn = searchReserve(token)
         # 若不是保留字则是标识符
@@ -147,13 +139,13 @@ def Scanner(syn, resourseproject, pProject):
             token.append(resourseproject[pProject])
             count += 1
             pProject += 1
-        token.append('\0')
+        token.append("\0")
         syn = 99
         return syn, token, pProject
     # 若为运算符或者界符，查表得到结果
     elif checkCalc(ch):
         token.append(resourseproject[pProject])
-        token.append('\0')
+        token.append("\0")
         for i in range(len(operatorOrDelimiter)):
             if token == operatorOrDelimiter[i]:
                 syn = 50 + i
@@ -161,95 +153,95 @@ def Scanner(syn, resourseproject, pProject):
         pProject += 1  # 指针下移，为下一扫描做准备
         return syn, token, pProject
     # 接下来判断是否为> < >= <=
-    elif resourseproject[pProject] == '<':
-        token.append('<')
+    elif resourseproject[pProject] == "<":
+        token.append("<")
         pProject += 1
-        if resourseproject[pProject] == '=':
-            token.append('=')
-            token.append('\0')
+        if resourseproject[pProject] == "=":
+            token.append("=")
+            token.append("\0")
             syn = searchOperator(token)
-        elif resourseproject[pProject] == '<':
-            token.append('<')
-            token.append('\0')
+        elif resourseproject[pProject] == "<":
+            token.append("<")
+            token.append("\0")
             pProject -= 1
             syn = searchOperator(token)
         else:
-            token.append('\0')
+            token.append("\0")
             pProject -= 1
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '>':
-        token.append('>')
+    elif resourseproject[pProject] == ">":
+        token.append(">")
         pProject += 1
-        if resourseproject[pProject] == '=':
-            token.append('=')
-            token.append('\0')
+        if resourseproject[pProject] == "=":
+            token.append("=")
+            token.append("\0")
             syn = searchOperator(token)
-        elif resourseproject[pProject] == '>':
-            token.append('>')
-            token.append('\0')
+        elif resourseproject[pProject] == ">":
+            token.append(">")
+            token.append("\0")
             syn = searchOperator(token)
             pProject -= 1
         else:
             pProject -= 1
-            token.append('\0')
+            token.append("\0")
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '=':
-        token.append('=')
+    elif resourseproject[pProject] == "=":
+        token.append("=")
         pProject += 1
-        if resourseproject[pProject] == '=':
-            token.append('=')
-            token.append('\0')
+        if resourseproject[pProject] == "=":
+            token.append("=")
+            token.append("\0")
             syn = searchOperator(token)
         else:
             pProject -= 1
-            token.append('\0')
+            token.append("\0")
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '!':
-        token.append('!')
+    elif resourseproject[pProject] == "!":
+        token.append("!")
         pProject += 1
-        if resourseproject[pProject] == '=':
-            token.append('=')
-            token.append('\0')
+        if resourseproject[pProject] == "=":
+            token.append("=")
+            token.append("\0")
             syn = searchOperator(token)
         else:
             pProject -= 1
-            token.append('\0')
+            token.append("\0")
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '&':
-        token.append('&')
+    elif resourseproject[pProject] == "&":
+        token.append("&")
         pProject += 1
-        if resourseproject[pProject] == '&':
-            token.append('&')
-            token.append('\0')
+        if resourseproject[pProject] == "&":
+            token.append("&")
+            token.append("\0")
             syn = searchOperator(token)
         else:
             pProject -= 1
-            token.append('\0')
+            token.append("\0")
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '|':
-        token.append('|')
+    elif resourseproject[pProject] == "|":
+        token.append("|")
         pProject += 1
-        if resourseproject[pProject] == '|':
-            token.append('|')
-            token.append('\0')
+        if resourseproject[pProject] == "|":
+            token.append("|")
+            token.append("\0")
             syn = searchOperator(token)
         else:
             pProject -= 1
-            token.append('\0')
+            token.append("\0")
             syn = searchOperator(token)
         pProject += 1
         return syn, token, pProject
-    elif resourseproject[pProject] == '$':  # 结束符
+    elif resourseproject[pProject] == "$":  # 结束符
         syn = 0
     else:
         print("error：there is no exist")
@@ -259,8 +251,8 @@ def Scanner(syn, resourseproject, pProject):
 
 
 def writeStr(str):
-    with open("write.txt", 'a', encoding='utf-8') as f:
-        f.write(str + '\n')
+    with open("write.txt", "a", encoding="utf-8") as f:
+        f.write(str + "\n")
 
 
 def getStr(token):
@@ -274,9 +266,13 @@ token = []
 syn = -1
 pProject = 0
 # https://stackoverflow.com/a/3430395/13040423
-with open(os.path.join(pathlib.Path(__file__).parent.absolute(),"sql.txt") , 'r', encoding='utf-8') as f:
+with open(
+    os.path.join(pathlib.Path(__file__).parent.absolute(), "sql.txt"),
+    "r",
+    encoding="utf-8",
+) as f:
     resourceProject = f.read()
-resourceProject.__add__('\0')
+resourceProject.__add__("\0")
 print("过滤前的源程序：")
 print(resourceProject)
 resourceProject = filterResource(resourceProject, len(resourceProject) - 1)
@@ -307,16 +303,19 @@ while syn != 0:
         writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
 
 
-
 def parse_sql() -> list:
     result = []
     token = []
     syn = -1
     pProject = 0
-    with open(os.path.join(pathlib.Path(__file__).parent.absolute(),"sql.txt"), 'r', encoding='utf-8') as f:
+    with open(
+        os.path.join(pathlib.Path(__file__).parent.absolute(), "sql.txt"),
+        "r",
+        encoding="utf-8",
+    ) as f:
         resourceProject = f.read()
-    resourceProject.__add__('$')
-    resourceProject.__add__('\0')
+    resourceProject.__add__("$")
+    resourceProject.__add__("\0")
     # print("过滤前的源程序：")
     # print(resourceProject)
     resourceProject = filterResource(resourceProject, len(resourceProject) - 1)
@@ -361,6 +360,7 @@ def parse_sql() -> list:
                 result[-1][1] += getStr(token)
         print(result)
     print(1)
+
 
 out = parse_sql()
 print(out)
