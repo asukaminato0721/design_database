@@ -9,7 +9,7 @@ import pathlib
 reserveWord = [
     "char", "const", "default", "double", "else", "float", "for", "if", "int", "long",
     "void", "while", "bool", "false", "else", "char", "create", "table", "into", "key",
-    "not_key", "null", "no_null", "valid", "edit", "in", "rename", "drop", "insert", "delete",
+    "notkey", "null", "nonull", "valid", "edit", "in", "rename", "drop", "insert", "delete",
     "update", "set", "select", "from", "where", "and", "or", "not", "as", "between",
 ]
 # 51-90表示操作符种别码 这里一共36种
