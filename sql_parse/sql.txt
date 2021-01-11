@@ -1,0 +1,2 @@
+select student.no from student a,score b where student.no=score.no
+$

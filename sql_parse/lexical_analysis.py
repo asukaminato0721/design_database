@@ -338,6 +338,8 @@ def parse_sql() -> list:
             if len(result[-1]) == 1:
                 result[-1].append(getStr(token))
             elif len(result[-1]) == 2:
+                if result[-1][1][-1] not in operatorOrDelimiter and getStr(token) not in operatorOrDelimiter:
+                    result[-1][1] += " "
                 result[-1][1] += getStr(token)
             # print(result)
         elif 1 <= syn <= len(reserveWord):
@@ -358,8 +360,7 @@ def parse_sql() -> list:
                 result[-1].append(getStr(token))
             elif len(result[-1]) == 2:
                 result[-1][1] += getStr(token)
-        print(result)
-    print(1)
+    return result
 
 
 out = parse_sql()

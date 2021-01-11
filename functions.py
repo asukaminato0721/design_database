@@ -1,5 +1,7 @@
 # 一些用于处理sql语句的函数
 import sqlparse
+from DataStructureModule import *
+from sql_parse.lexical_analysis import parse_sql
 
 
 def extract_tables(sql):
@@ -27,3 +29,6 @@ def extract_tables(sql):
         else:
             tables[item.split(' ')[1]]=item.split(' ')[0]
     return tables
+
+
+PrintTable(FindTable("Student"))
