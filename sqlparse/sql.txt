@@ -1,2 +1,5 @@
-select name, age from student where age=17
-select name, student.no from student,SC where student.no=SC.no
+CREATE TABLE MyTabel(
+Name char[10] KEY NONULL VALID,
+Age int NOTKEY NONULL VALID
+) INTO MyDB
+$
