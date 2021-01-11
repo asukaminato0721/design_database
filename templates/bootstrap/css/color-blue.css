@@ -1,0 +1,76 @@
+/*--------------------------------------------------
+    ## Color blue style
+---------------------------------------------------*/
+a:hover {
+	color:  #02a68f;
+}
+.btn-white {
+    color:  #02a68f;
+    border: 1px solid #02a68f;
+}
+.btn-base {
+    background: #02a68f;
+}
+.section-title .sub-title  {
+	color: #02a68f;
+}
+.navbar-area .nav-container .navbar-collapse .navbar-nav li.menu-item-has-children .sub-menu li:hover {
+    background: #02a68f;
+}
+.main-search-inner i {
+    color: #02a68f;
+}
+.owl-nav button {
+    border: 1px solid #02a68f;
+    color: #02a68f;
+}
+.owl-dots .owl-dot.active {
+    background: #02a68f;
+}
+.owl-nav button:hover {
+	background: #02a68f;
+}
+.single-course-inner .details .price {
+	background: #02a68f;
+}
+.footer-top.style-two {
+	background: #02a68f;
+}
+.footer-area .widget_nav_menu ul li a:hover {
+    color: #02a68f;
+}
+.social-area li a:hover {
+	color: #02a68f;
+}
+.footer-bottom p span {
+    color: #02a68f;
+}
+.back-to-top {
+	background-color: #02a68f;
+}
+.btn-border-white:hover,
+.td-log-in-popup .log-in-form .nav-pills .nav-item .nav-link.active, 
+.td-log-in-popup .log-in-form .nav-pills .nav-item .nav-link:hover,
+.single-blog-inner .details .date {
+    color: #02a68f;
+}
+.td-log-in-popup .log-in-form .nav-pills,
+.testimonial-thumbnail-carousel img {
+    border-color: #02a68f;
+}
+.toggle-btn .icon-left,
+.toggle-btn .icon-right,
+.toggle-btn .icon-left:before,
+.toggle-btn .icon-left:after,
+.toggle-btn .icon-right:before,
+.toggle-btn .icon-right:after,
+.header-cat-menu ul li:hover,
+.td-log-in-popup .log-in-wrap,
+.slick-dots li.slick-active,
+.testimonial-thumbnail-carousel .video-play-btn,
+.td-log-in-popup .log-in-form .nav-pills:after,
+.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area .btn-fb:hover,
+.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area .btn-google:hover,
+.td-search-popup .search-form .submit-btn {
+    background: #02a68f;
+}

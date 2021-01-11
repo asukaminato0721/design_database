@@ -1,0 +1,366 @@
+/*--------------------------------------------------
+    ## All responsive style
+---------------------------------------------------*/
+@media all and (min-width: 1600px) {
+	.nav-left-part .main-search-inner input {
+		width: 500px;
+	}
+	.banner-area-inner {
+        padding: 190px 100px 200px 100px;
+        margin-top: 100px;
+    }
+    .course-view-sitebar {
+		margin-top: -440px;
+	}
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:after,
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:before {
+	    width: 240px;
+	}
+	.td-log-in-popup .log-in-form {
+	    padding: 55px 50px 52px;
+	}
+	.banner-area.style-three .banner-area-inner .banner-inner h2 {
+		font-size: 55px;
+	}
+	.testimonial-thumbnail-carousel {
+		max-width: 630px;
+		margin: 0 auto;
+	}
+	.testimonial-thumbnail-slider {
+		max-width: 550px;
+		margin: 0 auto;
+	}
+	.single-cart-inner .price {
+		font-size: 22px;
+	}
+	.single-cart-inner .delete {
+		font-size: 24px;
+	}
+	.instructor-single-thumb img {
+		width: 100%;
+	}
+	.course-view-sitebar .widget {
+		padding: 25px;
+	}
+}
+@media all and (max-width: 1599px) {
+	.banner-area-inner {
+        padding: 110px 50px 120px 50px;
+        margin-top: 100px;
+    }
+    .banner-inner h2 {
+	    font-size: 32px;
+	}
+	.banner-inner p {
+	    font-size: 15px;
+	}
+	.banner-area.style-three .banner-area-inner {
+	    margin-top: 100px;
+	}
+	.main-search-inner input {
+	    height: 50px;
+	}
+	.main-search-inner i {
+	    top: 16px;
+	}
+	.single-category-inner.style-two {
+	    padding: 65px 20px;
+	}
+	.single-category-inner h4 {
+	    font-size: 20px;
+	}
+	.single-category-inner h6 {
+	    font-size: 14px;
+	}
+	.dmne-tab-inner.style-two ul li {
+	    margin-right: 60px;
+	}
+	.coming-soon-page-area {
+		padding-top: 140px;
+		padding-bottom: 100px;
+	}
+}
+@media all and (max-width: 1199px) {
+	.section-title.style-two h2 {
+		font-size: 32px;
+	}
+	.single-category-inner h4 {
+	    font-size: 16px;
+	}
+	.single-category-inner h6 {
+	    font-size: 13px;
+	}
+	.td-log-in-popup .log-in-wrap {
+	    padding: 144px 48px 143px;
+	}
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:after,
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:before {
+	    width: 100px;
+	}
+	.course-view-details-inner .details h3 {
+	    font-size: 24px;
+	}
+	.course-view-details-inner .details ul.introduction-list p {
+	    font-size: 12px;
+	}
+	.course-view-details-inner .details ul.introduction-list span {
+	    font-size: 13px;
+	}
+	.course-view-details-inner .details ul.price-area {
+	    margin-top: 30px;
+	}
+	.course-view-details-inner .details ul.price-area .btn {
+		padding: 0 15px;
+	}
+	.dmne-tab-inner.style-two ul li {
+	    margin-right: 30px;
+	}
+	.dmne-tab-inner ul li a {
+	    font-size: 16px;
+	}
+	.coming-soon-page-inner h1 {
+	    font-size: 40px;
+	}
+	.coming-soon-page-inner h4 {
+		font-size: 18px;
+	}
+	.timer-wrap .countdown .countdown-item {
+		margin-right: 70px !important;
+	}
+	.timer-wrap .countdown .countdown-item .countdown-number {
+		font-size: 28px !important;
+	}
+	.timer-wrap .countdown .countdown-item .countdown-text {
+		font-size: 16px !important;
+	}
+	.single-cart-inner .media .media-body h6 {
+	    font-size: 16px;
+	}
+	
+}
+@media all and (max-width: 991px) {
+	.nav-left-part {
+		display: none;
+	}
+	.td-search-popup .search-form {
+	    width: 50%;
+	}
+	.td-search-popup.active .search-form {
+	    width: 70%;
+	}
+	.nav-right-part-mobile .search {
+		margin-right: 20px;
+	}
+	.banner-area.style-three .banner-area-inner {
+	    height: auto;
+	}
+	.banner-area-inner {
+	    margin-top: 82px;
+	}
+	.sidebar-area {
+		margin-top: 80px;
+	}
+	.dmne-tab-inner ul li {
+	    margin: 0 7px;
+	}
+	.dmne-tab-inner ul li a {
+	    font-size: 15px;
+	}
+	.td-log-in-popup .log-in-form,
+	.td-log-in-popup .log-in-wrap {
+		border-radius: 0;
+	}
+	.td-log-in-popup .log-in-wrap {
+	    padding: 48px;
+	}
+	.course-view-sitebar {
+		margin-top: 90px;
+	}
+	.single-counter-inner h2 {
+		font-size: 28px;
+	}
+	.single-counter-inner h6 {
+		font-size: 13px;
+	}
+	.single-review-inner {
+		display: block;
+	}
+	.dmne-review-inner ul li ul {
+	    padding-left: 0;
+	}
+	.coming-soon-page-area .thumb {
+		margin-top: 50px;
+	}
+}
+@media all and (max-width: 767px) {
+	.single-course-inner .thumb img {
+		width: 100%;
+	}
+	.single-video-inner .thumb img {
+	    height: auto;
+	    width: 100%;
+	}
+	.single-video-inner .details {
+	    padding: 20px;
+	}
+	.blog-details-inner h2 {
+	    font-size: 28px;
+	}
+	.dmne-tab-inner ul li a:after {
+	    display: none;
+	}
+	.counter-area-inner li {
+		width: 49%;
+	}
+
+	.single-blog-inner .thumb img {
+		width: 100%;
+	}
+	.single-cart-inner .media {
+		display: block;
+	}
+	.single-cart-inner .media .media-left {
+		margin-bottom: 20px;
+	}
+	.single-cart-inner .price,
+	.single-cart-inner .delete {
+		margin-top: 15px;
+	}
+}
+@media all and (max-width: 575px) {
+	.section-title h2 {
+	    font-size: 28px;
+	}
+	.banner-inner p {
+		font-size: 16px;
+	}
+	.nav-right-part .btn {
+	    height: 35px;
+	    line-height: 35px;
+	}
+	.nav-right-part-mobile .search {
+	    margin-right: 5px;
+	}
+	.banner-area-inner {
+	    padding: 90px 25px 100px 25px;
+	}
+	.banner-inner h2 {
+	    font-size: 30px;
+	}
+	.single-course-inner .details {
+	    padding: 25px 20px;
+	}
+	.single-feedback-inner {
+	    padding: 40px 20px;
+	}
+	.single-blog-inner .details {
+	    padding: 25px 15px;
+	}
+	.exp-slider .banner-inner h2 {
+	    font-size: 22px;
+	}
+	.comment-area .media {
+	    display: block;
+	}
+	.comment-area .media .media-left {
+		margin-bottom: 20px;
+	}
+	.comment-area .media .media-body .btn {
+		position: relative;
+	    top: 0;
+	    margin-top: 20px;
+	}
+	.comment-form .btn {
+		width: 100%;
+	}
+	.td-log-in-popup .log-in-form,
+	.td-log-in-popup .log-in-wrap {
+		padding: 30px 25px;
+	}
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area .btn,
+	.td-log-in-popup .log-in-wrap .btn {
+	    width: 100%;
+	}
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .lost-password {
+	    float: left;
+	}
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:after, 
+	.td-log-in-popup .log-in-form .tab-content .tab-pane .other-log-in-area h6:before {
+		display: none;
+	}
+	.course-view-details-inner .details ul {
+		display: inherit;
+	}
+	.course-view-details-inner .details ul.price-area li {
+	    display: block;
+	}
+	.course-view-details-inner .details ul.price-area li {
+		margin-top: 10px;
+	}
+	.course-view-details-inner .details ul.introduction-list li {
+	    margin-right: 0;
+	    margin-bottom: 20px;
+	}
+	.course-view-details-inner .details ul.introduction-list li:last-child {
+		margin-bottom: 0;
+	}
+	.course-view-details-inner .details ul.price-area .btn {
+	    width: 100%;
+	}
+	.dmne-review-inner ul li {
+	    padding: 20px 20px;
+	}
+	.ratings-list-inner {
+	    padding: 20px;
+	}
+	.ratings-list-inner ul li .progress-bar-inner {
+	    width: 53%;
+	}
+	.ratings-list-inner ul li a {
+		font-size: 13px;
+	}
+	.timer-wrap .countdown .countdown-item {
+		margin-right: 40px !important;
+	}
+	.coming-soon-page-inner .btn {
+	    padding: 0 30px;
+	    width: 100%;
+	}
+	.pagination .page-item .page-link {
+	    padding: 12px 17px 12px 17px;
+	}
+
+	.footer-top h2 {
+		font-size: 30px;
+	}
+	.subscribe-inner-wrap button {
+	    position: relative;
+	    width: 100%;
+	    right: 0;
+	}
+	.subscribe-inner-wrap input {
+	    height: 60px;
+	    padding: 0 20px;
+	}
+	.footer-top.style-two .subscribe-inner-wrap button {
+		border: 1px solid #fff;
+	}
+	.footer-top.style-two .subscribe-inner-wrap button:hover {
+		border: 1px solid transparent;
+	}
+	.footer-bottom .thumb img {
+		width: 140px;
+	}
+	.back-to-top {
+	    right: 20px;
+	    bottom: 25px;
+	}
+	.pd-top-195 {
+	    padding-top: 120px;
+	}
+}
+@media all and (max-width: 360px) {
+	.banner-inner h2 {
+	    font-size: 28px;
+	}
+}
