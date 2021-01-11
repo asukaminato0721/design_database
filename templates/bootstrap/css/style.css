@@ -1479,6 +1479,22 @@ ul {
     background: #000000;
 }
 
+.pd-top-70 {
+    padding-top: 70px;
+}
+
+.pd-top-80 {
+    padding-top: 80px;
+}
+
+.pd-top-90 {
+    padding-top: 90px;
+}
+
+.pd-top-100 {
+    padding-top: 100px;
+}
+
 .pd-top-110 {
     padding-top: 110px;
 }
@@ -4178,4 +4194,31 @@ ul {
 
 .footer-bottom p span {
     color: var(--main-color);
+}
+
+.file-view {
+    border-style: outset;
+    height: 100%;
+    background-color: #4285f4;
+}
+
+.height-480 {
+    border-style: inset;
+    height: 480px;
+}
+
+.height-160 {
+    border-style: inset;
+    height: 160px;
+}
+
+.height-640 {
+    border-style: inset;
+    height: 640px;
+}
+
+.text-view {
+    border-style: outset;
+    height: 100%;
+    background-color: #e4db8a;
 }
