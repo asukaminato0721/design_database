@@ -48,8 +48,8 @@ vector<string> split(const string& str, const string& delim) {
 		res.push_back(s); //存入结果数组  
 		p = strtok(NULL, d);
 	}
-	delete strs;
-	delete d;
+	delete[] strs;
+	delete[] d;
 	return res;
 }
 
@@ -203,6 +203,11 @@ public:
 		auto p = begin(this->Data) + rowIndex;
 		free(*p);
 		this->Data.erase(p);
+		return this;
+	}
+
+	Table* UpdateData(uint8_t* pData, uint32_t offset, uint32_t length, uint64_t rowIndex) {
+		memcpy(this->Data[rowIndex] + offset, pData, length);
 		return this;
 	}
 
@@ -745,6 +750,56 @@ Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	return retTable;
 }
 
+Table* Update(Table* pTable, const vector<string>& Fields, const vector<string>& Datas, const vector<uint64_t>& index) {
+	vector<uint8_t*> pData;
+	vector<uint32_t> offset, length;
+	for (uint32_t i = 0; i < Fields.size(); ++i) {
+		if (pTable->FieldMap.find(Fields[i]) == pTable->FieldMap.end()) {
+			LogInfo("Can not find such Field '" + Fields[i] + "'", 9);
+			return nullptr;
+		}
+		auto f = pTable->FieldMap[Fields[i]];
+		auto size = f->FieldSize;
+		offset.push_back(f->Offset);
+		length.push_back(size);
+		uint8_t* buff = (uint8_t*)malloc(size);
+
+		auto typeId = f->FieldType.id;
+		if (typeId == INT.id) {
+			auto a = atoi(Datas[i].c_str());
+			memcpy(buff, &a, size);
+		}
+		else if (typeId == FLOAT.id) {
+			auto a = atof(Datas[i].c_str());
+			memcpy(buff, &a, size);
+		}
+		else if (typeId == CHAR.id) {
+			if (Datas[i].length() < size) {
+				strcpy((char*)buff, Datas[i].c_str());
+			}
+			else {
+				memcpy(buff, Datas[i].c_str(), size);//截断
+			}
+		}
+		else if (typeId == BYTE.id) {
+			memcpy(buff, Datas[i].c_str(), size);
+		}
+		else {
+			LogInfo("Unknown data type.", 14);
+			return nullptr;
+		}
+		pData.push_back(buff);
+	}
+	for (uint32_t i = 0; i < index.size(); i++)
+	{
+		for (uint32_t j = 0; j < pData.size(); j++)
+		{
+			pTable->UpdateData(pData[j], offset[j], length[j], index[i]);
+		}
+	}
+	return pTable;
+}
+
 Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string, string, int, int>>& Fields) {
 	auto FieldNum = Fields.size();
 	if (FieldNum > MAX_FIELD_NUMBER) {
@@ -955,10 +1010,10 @@ void SQL(DB& db, string sql) {
 			return;
 		}
 		selectTable->Print();
-		free(whereTable);
-		free(rowList);
-		free(fromTable);
-		free(selectTable);
+		delete (whereTable);
+		delete (rowList);
+		delete (fromTable);
+		delete (selectTable);
 	}
 	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
 		auto begin = sql.find("(");
@@ -1061,20 +1116,46 @@ void SQL(DB& db, string sql) {
 		Delete(db[from], *rowList);
 		free(fromTable);
 		free(rowList);
+	}
+	else if (upperSql.compare(0, 5, "UPDATE", 0, 5) == 0) {
+		auto setIndex = upperSql.find("SET");
+		auto whereIndex = upperSql.find("WHERE");
+		string whereStr;
+		if (whereIndex == string::npos) {
+			whereIndex = upperSql.length() - 1;
+			whereStr = "";
+		}
+		else {
+			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
+		}
+		string tableName = sql.substr(7, setIndex - 7 - 1);
+		if (db.find(tableName) == db.end()) {
+			LogInfo("Table named '" + tableName + "' not found.", 15);
+			return;
+		}
+		auto KeyValue = split(strip(sql.substr(setIndex + 3, whereIndex - setIndex - 3)), ",");
+		auto whereVec = db[tableName]->WhereFilter(whereStr);
+		vector<string> key, value;
+		for (uint32_t i = 0; i < KeyValue.size(); i++)
+		{
+			key.push_back(strip(split(KeyValue[i], "=")[0]));
+			value.push_back(strip(split(KeyValue[i], "=")[1]));
+		}
 
+		Update(db[tableName], key, value, *whereVec);
+		delete whereVec;
 	}
 }
 
 
 int main() {
-
 	DB database = DB();
 
 	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
 	auto startTime = clock();
 	auto times = 10000;
 	for (int i = 0; i < times; ++i) {
-		SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
+		//SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
 	}
 	cout << "insert " << times << " times used " << clock() - startTime << " ms" << endl;
 	SQL(database, "INSERT INTO Students ('Alice',10012,'cs_001',F);");
@@ -1083,7 +1164,11 @@ int main() {
 	SQL(database, "INSERT INTO Students ('Mike',10015,'cs_002',M);");
 	SQL(database, "INSERT INTO Students ('Peter',10016,'cs_003',M);");
 	SQL(database, "INSERT INTO Students ('Max',10017,'cs_003',M);");
-	SQL(database, "SELECT * FROM Students where Students.no = 10012;");
+	SQL(database, "SELECT * FROM Students;");
+
+	SQL(database, "UPDATE Students SET name = 'Azura',class = 'cs_004' where no = 10014;");
+	SQL(database, "SELECT * FROM Students;");
+
 
 	SQL(database, "CREATE TABLE Score (no int PRIMARY KEY not null ,mark float,grade char);");
 	SQL(database, "INSERT INTO Score VALUES (10011,97.5,A);");
