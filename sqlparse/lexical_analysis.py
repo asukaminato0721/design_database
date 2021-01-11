@@ -83,7 +83,7 @@ def filterResource(r, pProject):
                 i = i + 1
                 if r[i] == '$':
                     print("注释出错，没有找到*/，程序结束!!!")
-                    exit(0)
+                    break
             i += 2
         elif r[i] != '\n' and r[i] != '\t' and r[i] != '\v' and r[i] != '\r':
             # print("录入", i)
@@ -307,9 +307,7 @@ while syn != 0:
     elif 50 <= syn <= 98:
         print("(%s , --)" % operatorOrDelimiter[syn - 50])
         writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
-for i in range(100):
-    print("第%d个标识符:%s" % (i + 1, IdentifierTbl[i]))
-    writeStr(f"第{i}个标识符: " + IdentifierTbl[i])
+
 
 
 def parse_sql() -> list:
@@ -319,6 +317,7 @@ def parse_sql() -> list:
     pProject = 0
     with open(os.path.join(pathlib.Path(__file__).parent.absolute(),"sql.txt"), 'r', encoding='utf-8') as f:
         resourceProject = f.read()
+    resourceProject.__add__('$')
     resourceProject.__add__('\0')
     # print("过滤前的源程序：")
     # print(resourceProject)
@@ -364,7 +363,6 @@ def parse_sql() -> list:
                 result[-1][1] += getStr(token)
         print(result)
     print(1)
-
 
 out = parse_sql()
 print(out)
