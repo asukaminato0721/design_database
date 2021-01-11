@@ -33,3 +33,7 @@ def select(request: HttpRequest, db: str = "") -> HttpResponse:
             "all_database": all_database,
         },
     )
+
+
+def select_new(request: HttpRequest, db: str = ""):
+    return render(request, "index.html")

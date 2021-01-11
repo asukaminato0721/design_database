@@ -16,3 +16,7 @@ def modify(request: HttpRequest, db: str = ""):
             "all_database": all_database,
         },
     )
+
+
+def modify_new(request: HttpRequest, db: str = ""):
+    return render(request, "index.html")

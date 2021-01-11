@@ -18,8 +18,11 @@ from django.urls import include, path
 
 urlpatterns = [
     path("modify/", include("modify_database.urls")),
+    path("modify_new/", include("modify_database.urls_new")),
     path("select/", include("select_database.urls")),
+    path("select_new/", include("select_database.urls_new")),
     path("show/", include("show_database.urls")),
+    path("show_new/", include("show_database.urls_new")),
     path("admin/", admin.site.urls),
     path("", include("show_database.urls")),
 ]

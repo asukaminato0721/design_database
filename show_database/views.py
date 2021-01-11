@@ -20,3 +20,7 @@ def show(request: HttpRequest, db: str = "") -> HttpResponse:
             **locals(),
         },
     )
+
+
+def show_new(request: HttpRequest, db: str = ""):
+    return render(request, "index.html")
