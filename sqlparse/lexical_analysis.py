@@ -7,14 +7,11 @@ import pathlib
 # 部分还是C++程序的关键字保留字，可以删除
 # 完善SQL关键字
 reserveWord = [
-    "auto", "break", "case", "char", "const", "continue",
-    "default", "do", "double", "else", "enum", "extern",
-    "float", "for", "goto", "if", "int", "long",
-    "register", "return", "short", "signed", "sizeof", "static",
-    "struct", "switch", "typedef", "union", "unsigned", "void",
-    "volatile", "while", "bool", "return", "false", "else", "char",
-    "select", "from", "where", "and", "or", "not",
-    "as", "between"]
+    "char", "const", "default", "double", "else", "float", "for", "if", "int", "long",
+    "void", "while", "bool", "false", "else", "char", "create", "table", "into", "key",
+    "not_key", "null", "no_null", "valid", "edit", "in", "rename", "drop", "insert", "delete",
+    "update", "set", "select", "from", "where", "and", "or", "not", "as", "between",
+]
 # 51-90表示操作符种别码 这里一共36种
 operatorOrDelimiter = [
     "+", "-", "*", "/", "<", "<=", ">", ">=", "=", "==",
@@ -31,7 +28,7 @@ operatorOrDelimiter = [
 # 查找保留字
 def searchReserve(s):
     for i in range(len(reserveWord)):
-        if getStr(s) == reserveWord[i]:
+        if getStr(s).lower() == reserveWord[i]:
             return i + 1
     return -1
 
