@@ -30,21 +30,19 @@
 </head>
 
 <body>
-
+    <!-- navbar start -->
     <div class="navbar-area">
-        <nav class="navbar navbar-default">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container nav-container">
+                <div class="responsive-mobile-menu">
+                    <button class="menu toggle-btn d-block d-lg-none" data-target="#themefie_main_menu" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        </button>
-                    <a class="navbar-brand" href="#">Brand</a>
+                        <span class="icon-left"></span>
+                        <span class="icon-right"></span>
+                    </button>
                 </div>
                 <div class="logo">
-                    <a class="" href="index.html"><img src="assets/img/dbms.png" alt="img" width="50"></a>
+                    <a class="main-logo" href="index.html"><img src="img/dbms.png" alt="img" width="40"></a>
                 </div>
                 <div class="nav-left-part">
                     <ul class="nav-left-part-list">
@@ -62,12 +60,17 @@
                                 </ul>
                             </div>
                         </li>
+                        <li>
+                            <div class="main-search-inner main-search-bg ml-3">
+                                <i class="fa fa-search"></i>
+                                <input type="text" placeholder="Search Here">
+                            </div>
+                        </li>
                     </ul>
                 </div>
-                <div class="collapse navbar-collapse">
+                <div class="collapse navbar-collapse" id="themefie_main_menu">
                     <ul class="navbar-nav menu-open text-left pl-lg-5">
                         <li class="menu-item-has-children current-menu-item">
-                            <i class="fa fa-edit"></i>
                             <a href="#">编辑</a>
                             <ul class="sub-menu">
                                 <li><a href="index.html">刷新数据库</a></li>
@@ -78,7 +81,6 @@
                             </ul>
                         </li>
                         <li class="menu-item-has-children current-menu-item">
-                            <i class="fa fa-database"></i>
                             <a href="#">数据库</a>
                             <ul class="sub-menu">
                                 <li><a href="about.html">创建数据库</a></li>
@@ -108,15 +110,90 @@
                     </ul>
                 </div>
                 <div class="nav-right-part nav-right-part-desktop">
-                    <a class="btn btn-white" href="#">登录</a>
+                    <a class="btn btn-white log-in" href="#">登录</a>
                 </div>
             </div>
         </nav>
     </div>
+    <!-- navbar end -->
+    <header class="navbar navbar-static-top bs-docs-nav" id="top">
+        <nav class="navbar navbar-default" id="bs-navbar">
+            <div class="container">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                  <span class="sr-only">Toggle navigation</span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                    <a class="navbar-brand" href="#">DBMS</a>
+                </div>
+                <div class="container-fluid">
+                    <!-- Collect the nav links, forms, and other content for toggling -->
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown">
+                                <i class=""></i>
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> 文件<span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">打开数据库</a></li>
+                                    <li><a href="#">新建数据库</a></li>
+                                    <li><a href="#">退出</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">编辑</a></li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">数据库 <span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">创建数据库</a></li>
+                                    <li><a href="#">改变数据库</a></li>
+                                    <li><a href="#">导入数据库</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="#">导出</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="#">备份</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">表单<span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">打开表</a></li>
+                                    <li><a href="#">创建表</a></li>
+                                    <li><a href="#">改变表</a></li>
+                                    <li><a href="#">管理索引</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">工具</a></li>
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/scripts.js"></script>
+                        </ul>
+                        <form class="navbar-form navbar-left">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search">
+                            </div>
+                            <button type="submit" class="btn btn-default">Submit</button>
+                        </form>
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><a href="#">Link</a></li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">Action</a></li>
+                                    <li><a href="#">Another action</a></li>
+                                    <li><a href="#">Something else here</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="#">Separated link</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- /.navbar-collapse -->
+                </div>
+                <!-- /.container-fluid -->
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+
+    </div>
 </body>
-
-</html>
