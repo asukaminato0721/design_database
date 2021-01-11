@@ -16,9 +16,10 @@
     <script src="bootstrap/js/vendor.js"></script>
     <!-- main js  -->
     <script src="bootstrap/js/main.js"></script>
+    <script src="bootstrap/js/app.js"></script>
     <style>
         .navbar-area {
-            box-shadow: 10px 4px 5px #888888;
+            box-shadow: 10px 3px 4px #888888;
         }
         
         .dmne-sidebar {
@@ -29,109 +30,208 @@
     </style>
 </head>
 
-<body>
-    <!-- navbar start -->
+<body class="layout-has-drawer">
+    <div class="container-fluid">
+        <div class="pd-top-80 app-layout-canvas">
+            <div class="height-480 app-layout-container">
+                <!--左侧文件夹视图-->
+                <aside class="app-layout-drawer">
+                    <div class="app-layout-drawer-scroll">
+                        <!-- Drawer logo -->
+                        <div id="logo" class="drawer-header">
+                            <a href="index.html"><img class="img-responsive" src="img/dbms.png" title="DBMS" alt="DBMS" /></a>
+                        </div>
 
-    <!-- navbar end -->
-    <header class="navbar navbar-static-top bs-docs-nav" id="top">
-        <div class="navbar-area">
-            <nav class="navbar navbar-expand-lg">
-                <div class="container nav-container">
-                    <div class="responsive-mobile-menu">
-                        <button class="menu toggle-btn d-block d-lg-none" data-target="#themefie_main_menu" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-left"></span>
-                            <span class="icon-right"></span>
-                        </button>
-                    </div>
-                    <div class="logo">
-                        <a class="main-logo" href="index.html"><img src="img/dbms.png" alt="img" width="40"></a>
-                    </div>
-                    <div class="nav-left-part">
-                        <ul class="nav-left-part-list">
-                            <li>
-                                <div class="header-cat-menu">
-                                    <i class="fa fa-th"></i>
-                                    <a href="#">文件</a>
-                                    <i class="fa fa-caret-down"></i>
-                                    <ul>
-                                        <li><a href="#"><i class="fa fa-building"></i>打开数据库</a></li>
-                                        <li><a href="#"><i class="fa fa-th"></i> 新建连接</a></li>
-                                        <li><a href="#"><i class="fa fa-code"></i> 新建查询编辑器</a></li>
-                                        <li><a href="#"><i class="fa fa-clone"></i> 保存</a></li>
-                                        <li><a href="#"><i class="fa fa-pencil-square-o"></i> 退出</a></li>
+                        <!-- Drawer navigation -->
+                        <nav class="drawer-main">
+                            <ul class="nav nav-drawer">
+                                <li class="nav-title">当前打开</li>
+                                <li class="nav-item"><a href="index.html"><i class=""></i> SQL1</a> </li>
+                                <li class="nav-item"> <a href="frontend_home.html"><i class=""></i> SQL2</a></li>
+
+                                <li class="nav-title">文件夹目录</li>
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="#"><i class=""></i>一号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_ui_buttons.html">Buttons</a></li>
+                                        <li><a href="base_ui_cards.html">Cards</a></li>
+                                        <li><a href="base_ui_cards_api.html">Cards API</a></li>
+                                        <li><a href="base_ui_layout.html">Layout</a></li>
+                                        <li><a href="base_ui_grid.html">Grid</a></li>
+                                        <li><a href="base_ui_icons.html">Icons</a></li>
+                                        <li><a href="base_ui_modals_tooltips.html">Modals / Tooltips</a></li>
+                                        <li><a href="base_ui_alerts_notify.html">Alerts / Notify</a></li>
+                                        <li><a href="base_ui_pagination.html">Pagination</a></li>
                                     </ul>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="main-search-inner main-search-bg ml-3">
-                                    <i class="fa fa-search"></i>
-                                    <input type="text" placeholder="Search Here">
-                                </div>
-                            </li>
-                        </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="#"><i class=""></i> 二号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_forms_elements.html">Elements</a></li>
+                                        <li><a href="base_forms_samples.html">Samples</a></li>
+                                        <li><a href="base_forms_pickers_select.html">Pickers &amp; Select</a></li>
+                                        <li><a href="base_forms_validation.html">Validation</a></li>
+                                        <li><a href="base_forms_wizard.html">Wizard</a></li>
+
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 三号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li class="active"><a href="base_tables_styles.html">Styles</a></li>
+                                        <li><a href="base_tables_responsive.html">Responsive</a></li>
+                                        <li><a href="base_tables_tools.html">Tools</a></li>
+                                        <li><a href="base_tables_pricing.html">Pricing</a></li>
+                                        <li> <a href="base_tables_datatables.html">Wizard</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 四号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 五号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </nav>
+                        <!-- End drawer navigation -->
                     </div>
-                    <div class="collapse navbar-collapse" id="themefie_main_menu">
-                        <ul class="navbar-nav menu-open text-left pl-lg-5">
-                            <li class="menu-item-has-children current-menu-item">
-                                <a href="#">编辑</a>
-                                <ul class="sub-menu">
-                                    <li><a href="index.html">刷新数据库</a></li>
-                                    <li><a href="index-2.html">执行 查询</a></li>
-                                    <li><a href="index-3.html">撤销</a></li>
-                                    <li><a href="index-4.html">重做</a></li>
-                                    <li><a href="index-4.html">粘贴</a></li>
-                                </ul>
-                            </li>
-                            <li class="menu-item-has-children current-menu-item">
-                                <a href="#">数据库</a>
-                                <ul class="sub-menu">
-                                    <li><a href="about.html">创建数据库</a></li>
-                                    <li><a href="course.html">改变数据库</a></li>
-                                    <li><a href="course-view.html">导入</a></li>
-                                    <li><a href="course-view-2.html">导出</a></li>
-                                    <li><a href="instructor.html">备份</a></li>
-                                </ul>
-                            </li>
-                            <li class="menu-item-has-children current-menu-item">
-                                <i class="fa fa-folder"></i>
-                                <a href="#">表单</a>
-                                <ul class="sub-menu">
-                                    <li><a href="">打开表</a></li>
-                                    <li><a href="">创建表</a></li>
-                                    <li><a href="">改变表</a></li>
-                                    <li><a href="">管理索引</a></li>
-                                </ul>
-                            </li>
-                            <li class="menu-item-has-children current-menu-item">
-                                <i class="fa fa-eercast"></i>
-                                <a href="#">工具</a>
-                                <ul class="sub-menu">
-                                    <li><a href="">历史记录</a></li>
-                                </ul>
-                            </li>
+                </aside>
+                <div>
+                    <header class="app-layout-header per-10">
+                        <div class="navbar-area">
+                            <nav class="navbar navbar-expand-lg">
+                                <div class="container-fluid nav-container">
+                                    <div class="responsive-mobile-menu">
+                                        <button class="menu toggle-btn d-block d-lg-none" data-target="#themefie_main_menu" aria-expanded="false" aria-label="Toggle navigation">
+                                            <span class="sr-only">Toggle navigation</span>
+                                            <span class="icon-left"></span>
+                                            <span class="icon-right"></span>
+                                        </button>
+                                    </div>
+                                    <div class="nav-left-part">
+                                        <ul class="nav-left-part-list">
+                                            <li>
+                                                <div class="header-cat-menu">
+                                                    <i class="fa fa-th"></i>
+                                                    <a href="#">文件</a>
+                                                    <i class="fa fa-caret-down"></i>
+                                                    <ul>
+                                                        <li><a href="#"><i class="fa fa-building"></i>打开数据库</a></li>
+                                                        <li><a href="#"><i class="fa fa-th"></i> 新建连接</a></li>
+                                                        <li><a href="#"><i class="fa fa-code"></i> 新建查询编辑器</a></li>
+                                                        <li><a href="#"><i class="fa fa-clone"></i> 保存</a></li>
+                                                        <li><a href="#"><i class="fa fa-pencil-square-o"></i> 退出</a></li>
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="main-search-inner main-search-bg ml-3">
+                                                    <i class="fa fa-search"></i>
+                                                    <input type="text" placeholder="Search Here">
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="collapse navbar-collapse" id="themefie_main_menu">
+                                        <ul class="navbar-nav menu-open text-left pl-lg-5">
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <a href="#">编辑</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="index.html">刷新数据库</a></li>
+                                                    <li><a href="index-2.html">执行 查询</a></li>
+                                                    <li><a href="index-3.html">撤销</a></li>
+                                                    <li><a href="index-4.html">重做</a></li>
+                                                    <li><a href="index-4.html">粘贴</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <a href="#">数据库</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="about.html">创建数据库</a></li>
+                                                    <li><a href="course.html">改变数据库</a></li>
+                                                    <li><a href="course-view.html">导入</a></li>
+                                                    <li><a href="course-view-2.html">导出</a></li>
+                                                    <li><a href="instructor.html">备份</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <i class="fa fa-folder"></i>
+                                                <a href="#">表单</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="">打开表</a></li>
+                                                    <li><a href="">创建表</a></li>
+                                                    <li><a href="">改变表</a></li>
+                                                    <li><a href="">管理索引</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <i class="fa fa-eercast"></i>
+                                                <a href="#">工具</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="">历史记录</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="collapse navbar-collapse">
+                                        <a class="btn btn-white log-in" href="#">登录</a>
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+                    </header>
+                    <main class="app-layout-content text-view per-70">
+                        <ul class="nav nav-tabs">
+                            <li role="presentation" class="active"><a href="#">SQL1</a></li>
+                            <li role="presentation"><a href="#">SQL2</a></li>
+                            <li role="presentation"><a href="#">SQL3</a></li>
                         </ul>
-                    </div>
-                    <div class="nav-right-part nav-right-part-desktop">
-                        <a class="btn btn-white log-in" href="#">登录</a>
+                        <div class="text-input-view">
+                            <textarea class="text-input"></textarea>
+                            <div class="submit-view">
+                                <a type="button" class="btn btn-primary" href="">提交</a>
+                            </div>
+                        </div>
+                    </main>
+
+                    <div class="container-fluid per-20">
+                        <ul class="nav nav-tabs">
+                            <li role="presentation" class="active"><a href="#">运行结果</a></li>
+                            <li role="presentation"><a href="#">表数据</a></li>
+                            <li role="presentation"><a href="#">控制台</a></li>
+                        </ul>
+                        <a class="row height-120 ouput">
+                            1111111
+                        </a>
                     </div>
                 </div>
-            </nav>
-        </div>
-    </header>
-    <div class="container  pd-top-80">
-        <div class="row height-480">
-            <div class="col-lg-3 file-view">
-                111
-            </div>
-            <div class="col-lg-9 text-view">
-                2222
             </div>
         </div>
     </div>
-    <div class="container">
-        <div class="row height-160">
 
-        </div>
-    </div>
+    <!-- AppUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock and App.js -->
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/bootstrap.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.slimscroll.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.scrollLock.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.placeholder.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/app-custom.js"></script>
 </body>
