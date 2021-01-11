@@ -87,13 +87,72 @@ public:
 
 class TOKEN
 {
- //索引的数据结构
+ //标志的数据结构
 public:
     vector<string> codes;
     string taken_name;
 
     TOKEN() { }
 };
+
+//将读取到的字符串（文件中的一行）解析成User的各属性
+USER StringToUser(string s)
+{
+	USER temp;
+	string t = "";
+	int i = 0;
+	int len = s.length();
+
+	while(s[i] == ' ')
+            ++i;
+	for( i; i < len; ++i){
+        if(s[i] == ' ')
+		   break;
+		else t=t+s[i];
+
+	}
+	temp.name = t;
+	t ="";
+	while(s[i] == ' ')
+        ++i;
+	for( i; i < len; ++i){
+        if(s[i] == ' ')
+            break;
+		else
+		    t =t+ s[i];
+	}
+
+	temp.password = t;
+	t ="";
+
+	while(s[i] == ' ')
+        ++i;
+	for( i; i < len; ++i){
+        if(s[i] == ' ')
+            break;
+		else
+		    t =t+ s[i];
+	}
+
+	temp.right_super = t;
+
+	t = "";
+
+	while(s[i] == ' ')
+        ++i;
+	for( i; i < len; ++i){
+        if(s[i] == ' ')
+            break;
+		else
+		    t =t+ s[i];
+	}
+
+	temp.right_ordinary = t;
+
+	return temp;
+}
+
+
 
 //创建用户
 void CreateUser()
