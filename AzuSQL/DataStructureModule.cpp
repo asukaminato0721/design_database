@@ -1,26 +1,27 @@
-#define _CRT_SECURE_NO_WARNINGS
+ï»¿#define _CRT_SECURE_NO_WARNINGS
+
+
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 
 #include "./DataStructureModule.h"
 using namespace std;
 
-class ExchangeData;
-class Table;
-class Field;
+
+
+
 // https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
-// ¸ù¾İÕâ¸öÁ´½Ó£¬const ¿ÉÒÔÉ¾
+// æ ¹æ®è¿™ä¸ªé“¾æ¥ï¼Œconst å¯ä»¥åˆ 
 struct Datatype
 {
 	uint8_t id;
 	uint32_t size;
 };
-const Datatype INT = { 1, 4 };
-const Datatype FLOAT = { 3, 8 };
-const Datatype CHAR = { 10, 1 };
-const Datatype BYTE = { 11, 1 };
+const Datatype FieldType_INT = { 1, 4 };
+const Datatype FieldType_FLOAT = { 3, 8 };
+const Datatype FieldType_CHAR = { 10, 1 };
+const Datatype FieldType_BYTE = { 11, 1 };
 
-typedef map<string, Table*> DB;
 
 string strip(const string& str) {
 	if (str == "") {
@@ -34,7 +35,7 @@ string strip(const string& str) {
 vector<string> split(const string& str, const string& delim) {
 	vector<string> res;
 	if ("" == str) return res;
-	//ÏÈ½«ÒªÇĞ¸îµÄ×Ö·û´®´ÓstringÀàĞÍ×ª»»Îªchar*ÀàĞÍ  
+	//å…ˆå°†è¦åˆ‡å‰²çš„å­—ç¬¦ä¸²ä»stringç±»å‹è½¬æ¢ä¸ºchar*ç±»å‹  
 	char* strs = new char[str.length() + 1];
 	strcpy(strs, str.c_str());
 
@@ -43,9 +44,9 @@ vector<string> split(const string& str, const string& delim) {
 
 	char* p = strtok(strs, d);
 	while (p) {
-		string s = p; //·Ö¸îµÃµ½µÄ×Ö·û´®×ª»»ÎªstringÀàĞÍ
+		string s = p; //åˆ†å‰²å¾—åˆ°çš„å­—ç¬¦ä¸²è½¬æ¢ä¸ºstringç±»å‹
 		s = strip(s);
-		res.push_back(s); //´æÈë½á¹ûÊı×é  
+		res.push_back(s); //å­˜å…¥ç»“æœæ•°ç»„  
 		p = strtok(NULL, d);
 	}
 	delete[] strs;
@@ -66,7 +67,7 @@ void LogInfo(string msg, uint8_t level) {
 }
 
 /// <summary>
-/// Êı¾İ½»»»¸ñÊ½£¨pDataÊÇÒıÓÃ£©
+/// æ•°æ®äº¤æ¢æ ¼å¼ï¼ˆpDataæ˜¯å¼•ç”¨ï¼‰
 /// </summary>
 class ExchangeData
 {
@@ -94,7 +95,7 @@ public:
 
 };
 
-//ÊôĞÔÃû+ÀàĞÍºÅ+³¤¶È+±êÇ©
+//å±æ€§å+ç±»å‹å·+é•¿åº¦+æ ‡ç­¾
 #define FIELD_SIZE (MAX_FIELD_NAME_LEN+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
 class Field
 {
@@ -102,7 +103,7 @@ public:
 	Field(string fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
 		this->FieldName = fieldName;
 		this->FieldType = fieldType;
-		if (fieldType.id == CHAR.id || fieldType.id == BYTE.id) {
+		if (fieldType.id == FieldType_CHAR.id || fieldType.id == FieldType_BYTE.id) {
 			this->FieldSize = length;
 		}
 		else {
@@ -120,13 +121,13 @@ public:
 		this->FieldType = f->FieldType;
 	}
 	string FieldName;
-	Datatype FieldType = INT;
+	Datatype FieldType = FieldType_INT;
 	uint32_t FieldProperty = 0;
 	uint32_t FieldSize = 1;
 	uint32_t Offset = 0;
 };
 
-//±íÃû+ÊôĞÔÊıÁ¿+Êı¾İÊıÁ¿+Êı¾İ³¤¶È
+//è¡¨å+å±æ€§æ•°é‡+æ•°æ®æ•°é‡+æ•°æ®é•¿åº¦
 #define TABLE_HEAD_SIZE (MAX_TABLE_NAME_LEN+sizeof(uint32_t)+sizeof(uint64_t)+sizeof(uint32_t))
 
 class Table
@@ -180,10 +181,10 @@ public:
 	}
 
 	/// <summary>
-	/// ½«Êı¾İ²åÈë±íÖĞ£¨Éî¿½±´£©
+	/// å°†æ•°æ®æ’å…¥è¡¨ä¸­ï¼ˆæ·±æ‹·è´ï¼‰
 	/// </summary>
-	/// <param name="DataTuple">Ö¸ÏòÊı¾İÍ·µÄÖ¸Õë</param>
-	/// <returns>·µ»Ø¸Ã±í</returns>
+	/// <param name="DataTuple">æŒ‡å‘æ•°æ®å¤´çš„æŒ‡é’ˆ</param>
+	/// <returns>è¿”å›è¯¥è¡¨</returns>
 	Table* InsertData(uint8_t* data) {
 		uint8_t* pDataRow = (uint8_t*)calloc(this->TableRowSize, sizeof(uint8_t));
 		if (pDataRow == NULL) {
@@ -195,10 +196,10 @@ public:
 		return this;
 	}
 	/// <summary>
-	/// É¾³ı±íÖĞµÄÊı¾İ
+	/// åˆ é™¤è¡¨ä¸­çš„æ•°æ®
 	/// </summary>
-	/// <param name="rowIndex">´ıÉ¾³ıµÄĞĞºÅ</param>
-	/// <returns>·µ»Ø¸Ã±í</returns>
+	/// <param name="rowIndex">å¾…åˆ é™¤çš„è¡Œå·</param>
+	/// <returns>è¿”å›è¯¥è¡¨</returns>
 	Table* DeleteData(uint64_t rowIndex) {
 		auto p = begin(this->Data) + rowIndex;
 		free(*p);
@@ -222,7 +223,7 @@ public:
 			return pRet;
 		}
 
-		//TODO Ä¬ÈÏÔÚ¹Ø¼ü×ÖÖ®¼ä»áÌí¼Ó¿Õ¸ñ£¬¼Æ»®×Ô¶¯Ìí¼Ó¿Õ¸ñ
+		//TODO é»˜è®¤åœ¨å…³é”®å­—ä¹‹é—´ä¼šæ·»åŠ ç©ºæ ¼ï¼Œè®¡åˆ’è‡ªåŠ¨æ·»åŠ ç©ºæ ¼
 		string UpperWhere = whereStr;
 		transform(UpperWhere.begin(), UpperWhere.end(), UpperWhere.begin(), ::toupper);
 
@@ -384,20 +385,20 @@ public:
 							}
 						}
 						else if (typeIdA == 0 && typeIdB != 0) {//imm op data
-							if (typeIdB == INT.id) {
+							if (typeIdB == FieldType_INT.id) {
 								int32_t _a = atoi(a.c_str());
 								int32_t _b = *(int*)(data + beginB);
 								diff = _a - _b;
 							}
-							else if (typeIdB == FLOAT.id) {
+							else if (typeIdB == FieldType_FLOAT.id) {
 								double _a = atof(a.c_str());
 								double _b = *(double*)(data + beginB);
 								diff = _a - _b;
 							}
-							else if (typeIdB == CHAR.id) {
+							else if (typeIdB == FieldType_CHAR.id) {
 								diff = strcmp(a.c_str(), (char*)data + beginB);
 							}
-							else if (typeIdB == BYTE.id) {
+							else if (typeIdB == FieldType_BYTE.id) {
 								diff = memcmp(a.c_str(), data + beginB, lengthB);
 							}
 							else {
@@ -407,20 +408,20 @@ public:
 
 						}
 						else if (typeIdA != 0 && typeIdB == 0) {//data op imm
-							if (typeIdA == INT.id) {
+							if (typeIdA == FieldType_INT.id) {
 								int32_t _b = atoi(b.c_str());
 								int32_t _a = *(int*)(data + beginA);
 								diff = _a - _b;
 							}
-							else if (typeIdA == FLOAT.id) {
+							else if (typeIdA == FieldType_FLOAT.id) {
 								double _b = atof(b.c_str());
 								double _a = *(double*)(data + beginA);
 								diff = _a - _b;
 							}
-							else if (typeIdA == CHAR.id) {
+							else if (typeIdA == FieldType_CHAR.id) {
 								diff = memcmp(data + beginA, b.c_str(), lengthA);
 							}
-							else if (typeIdA == BYTE.id) {
+							else if (typeIdA == FieldType_BYTE.id) {
 								diff = memcmp(data + beginA, b.c_str(), lengthA);
 							}
 							else {
@@ -430,20 +431,20 @@ public:
 
 						}
 						else if (typeIdA != 0 && typeIdB != 0) {//data op data
-							if (typeIdB == INT.id) {
+							if (typeIdB == FieldType_INT.id) {
 								int32_t _a = *(int*)(data + beginA);
 								int32_t _b = *(int*)(data + beginB);
 								diff = _a - _b;
 							}
-							else if (typeIdB == FLOAT.id) {
+							else if (typeIdB == FieldType_FLOAT.id) {
 								double _a = *(double*)(data + beginA);
 								double _b = *(double*)(data + lengthB);
 								diff = _a - _b;
 							}
-							else if (typeIdB == CHAR.id) {
+							else if (typeIdB == FieldType_CHAR.id) {
 								diff = memcmp(data + beginA, data + beginB, lengthA);
 							}
-							else if (typeIdB == BYTE.id) {
+							else if (typeIdB == FieldType_BYTE.id) {
 								diff = memcmp(data + beginA, data + beginB, lengthA);
 							}
 							else {
@@ -503,53 +504,56 @@ public:
 		return result;
 	}
 
-	const void Print() {
-		printf("========================================================\n");
-		printf("[Table Name : %s]\n", this->TableName.c_str());
+	const string Print() {
+		stringstream res;
+		res << "========================================================" << "\r\n";
+		res << "[Table Name : " << this->TableName << "]" << "\r\n";
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			printf("%-15s", this->TableField[i]->FieldName.c_str());
+			res << setw(15) << this->TableField[i]->FieldName << endl;
 		}
-		printf("\n");
+		res << "\r\n";
 		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
 		{
 			for (uint32_t i = 0; i < this->TableFieldNum; i++) {
-				if (this->TableField[i]->FieldSize >= 255 || this->TableField[i]->FieldType.id == BYTE.id) {
-					printf("***\t");
+				if (this->TableField[i]->FieldSize >= 255 || this->TableField[i]->FieldType.id == FieldType_BYTE.id) {
+					res << setw(15) << "***";
 				}
 				else {
 					uint8_t buff[256];
 					memset(buff, 0, 256 * sizeof(uint8_t));
 					uint32_t fieldTypeID = this->TableField[i]->FieldType.id;
 					memcpy(buff, *iter + this->TableField[i]->Offset, this->TableField[i]->FieldSize);
-					if (fieldTypeID == CHAR.id)
+					if (fieldTypeID == FieldType_CHAR.id)
 					{
-						printf("%-15s", (char*)buff);
+						res << setw(15) << (char*)buff;
 					}
-					else if (fieldTypeID == INT.id) {
-						printf("%-15d", *(int*)buff);
+					else if (fieldTypeID == FieldType_INT.id) {
+						res << setw(15) << *(int*)buff;
+
 					}
-					else if (fieldTypeID == FLOAT.id) {
-						printf("%-15lf", *(double*)buff);
+					else if (fieldTypeID == FieldType_FLOAT.id) {
+						res << setw(15) << *(double*)buff;
+
 					}
-					else if (fieldTypeID == CHAR.id) {
-						printf("%-15s\t\t", buff);
+					else if (fieldTypeID == FieldType_CHAR.id) {
+						res << setw(15) << buff;
 					}
 				}
 			}
-			printf("\n");
+			res << "\r\n";
 		}
-		printf("========================================================\n");
-
+		res << "========================================================" << "\r\n";
+		return res.str();
 	}
 };
 
 /// <summary>
-/// Ïò±íÖĞ²åÈëÊı¾İ
+/// å‘è¡¨ä¸­æ’å…¥æ•°æ®
 /// </summary>
-/// <param name="pTable">´ı²åÈëµÄ±í</param>
-/// <param name="fieldNameList">ÁĞÃû£¨vector£©</param>
-/// <param name="valuesList">Öµ£¨vector£©</param>
-/// <returns>²åÈëºóµÄ±í</returns>
+/// <param name="pTable">å¾…æ’å…¥çš„è¡¨</param>
+/// <param name="fieldNameList">åˆ—åï¼ˆvectorï¼‰</param>
+/// <param name="valuesList">å€¼ï¼ˆvectorï¼‰</param>
+/// <returns>æ’å…¥åçš„è¡¨</returns>
 Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<string> valuesList) {
 	if (valuesList.size() != fieldNameList.size()) {
 		LogInfo("Field number and Values number not match.", 8);
@@ -570,16 +574,16 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 		auto type = iter->second->FieldType.id;
 		auto offset = iter->second->Offset;
 		auto length = iter->second->FieldSize;
-		if (type == INT.id) {
+		if (type == FieldType_INT.id) {
 			int value = atoi(valuesList[i].c_str());
 			memcpy(buff + offset, &value, length);
 		}
-		else if (type == FLOAT.id)
+		else if (type == FieldType_FLOAT.id)
 		{
 			double value = atof(valuesList[i].c_str());
 			memcpy(buff + offset, &value, length);
 		}
-		else if (type == CHAR.id || type == BYTE.id) {
+		else if (type == FieldType_CHAR.id || type == FieldType_BYTE.id) {
 			memcpy(buff + offset, (uint8_t*)valuesList[i].c_str(), length);
 		}
 		else {
@@ -593,11 +597,11 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 }
 
 /// <summary>
-/// µÑ¿¨¶û»ı
+/// ç¬›å¡å°”ç§¯
 /// </summary>
-/// <param name="tableNum">²ÎÓëÔËËãµÄ±íÊıÁ¿</param>
-/// <param name="tables">²ÎÓëÔËËãµÄ±íÖ¸Õë</param>
-/// <returns>µÑ¿¨¶û»ı½á¹û</returns>
+/// <param name="tableNum">å‚ä¸è¿ç®—çš„è¡¨æ•°é‡</param>
+/// <param name="tables">å‚ä¸è¿ç®—çš„è¡¨æŒ‡é’ˆ</param>
+/// <returns>ç¬›å¡å°”ç§¯ç»“æœ</returns>
 Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 	for (size_t i = 0; i < tableNameList.size(); i++)
 	{
@@ -672,10 +676,10 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 }
 
 /// <summary>
-/// Í¨¹ı`constraint`Ìõ¼şÉ¸Ñ¡ĞĞ
+/// é€šè¿‡`constraint`æ¡ä»¶ç­›é€‰è¡Œ
 /// </summary>
-/// <param name="constraint">Ô¼ÊøÌõ¼ş</param>
-/// <returns>²éÑ¯½á¹û</returns>
+/// <param name="constraint">çº¦æŸæ¡ä»¶</param>
+/// <returns>æŸ¥è¯¢ç»“æœ</returns>
 Table* Where(Table* pTable, const vector<uint64_t>& index) {
 	Table* retTable = new Table();
 	retTable->TableName = pTable->TableName + "'";
@@ -690,10 +694,10 @@ Table* Where(Table* pTable, const vector<uint64_t>& index) {
 }
 
 /// <summary>
-/// Í¨¹ı`constraint`Ìõ¼şÉ¾³ıĞĞ
+/// é€šè¿‡`constraint`æ¡ä»¶åˆ é™¤è¡Œ
 /// </summary>
-/// <param name="constraint">Ô¼ÊøÌõ¼ş</param>
-/// <returns>É¾³ı½á¹û</returns>
+/// <param name="constraint">çº¦æŸæ¡ä»¶</param>
+/// <returns>åˆ é™¤ç»“æœ</returns>
 Table* Delete(Table* pTable, const vector<uint64_t>& index) {
 	for (int64_t i = index.size() - 1; i >= 0; --i) {
 		pTable->DeleteData(index[i]);
@@ -702,10 +706,10 @@ Table* Delete(Table* pTable, const vector<uint64_t>& index) {
 }
 
 /// <summary>
-/// Ñ¡Ôñ±íÖĞÈô¸ÉÁĞ
+/// é€‰æ‹©è¡¨ä¸­è‹¥å¹²åˆ—
 /// </summary>
-/// <param name="fieldNames">ÊôĞÔÃûÁĞ±í</param>
-/// <returns>Í¶Ó°ºóµÄ½á¹û</returns>
+/// <param name="fieldNames">å±æ€§ååˆ—è¡¨</param>
+/// <returns>æŠ•å½±åçš„ç»“æœ</returns>
 Table* Select(const Table* pTable, const vector<string> fieldNames) {
 	Table* retTable = new Table();
 	retTable->TableName = pTable->TableName + "'";
@@ -765,23 +769,23 @@ Table* Update(Table* pTable, const vector<string>& Fields, const vector<string>&
 		uint8_t* buff = (uint8_t*)malloc(size);
 
 		auto typeId = f->FieldType.id;
-		if (typeId == INT.id) {
+		if (typeId == FieldType_INT.id) {
 			auto a = atoi(Datas[i].c_str());
 			memcpy(buff, &a, size);
 		}
-		else if (typeId == FLOAT.id) {
+		else if (typeId == FieldType_FLOAT.id) {
 			auto a = atof(Datas[i].c_str());
 			memcpy(buff, &a, size);
 		}
-		else if (typeId == CHAR.id) {
+		else if (typeId == FieldType_CHAR.id) {
 			if (Datas[i].length() < size) {
 				strcpy((char*)buff, Datas[i].c_str());
 			}
 			else {
-				memcpy(buff, Datas[i].c_str(), size);//½Ø¶Ï
+				memcpy(buff, Datas[i].c_str(), size);//æˆªæ–­
 			}
 		}
-		else if (typeId == BYTE.id) {
+		else if (typeId == FieldType_BYTE.id) {
 			memcpy(buff, Datas[i].c_str(), size);
 		}
 		else {
@@ -813,19 +817,19 @@ Table* Create(DB& pDatabase, const string& tableName, const vector<tuple<string,
 		auto type = std::get<1>(Fields[i]);
 		const Datatype* ptype = nullptr;
 		if (type == "INT") {
-			ptype = &INT;
+			ptype = &FieldType_INT;
 		}
 		else if (type == "FLOAT") {
-			ptype = &FLOAT;
+			ptype = &FieldType_FLOAT;
 
 		}
 		else if (type == "CHAR")
 		{
-			ptype = &CHAR;
+			ptype = &FieldType_CHAR;
 		}
 		else if (type == "BYTE")
 		{
-			ptype = &BYTE;
+			ptype = &FieldType_BYTE;
 		}
 		else
 		{
@@ -864,13 +868,13 @@ void StoreDatabase(string filePath, const DB& database) {
 			return;
 		}
 		uint64_t rowNumber = table->Data.size();
-		//Ğ´Èë±íÃû
+		//å†™å…¥è¡¨å
 		strcpy((char*)buff, table->TableName.c_str());
-		//ÊôĞÔÊıÁ¿uint32_t
+		//å±æ€§æ•°é‡uint32_t
 		memcpy(buff + MAX_TABLE_NAME_LEN, &table->TableFieldNum, sizeof(table->TableFieldNum));
-		//ĞĞÊıuint64_t
+		//è¡Œæ•°uint64_t
 		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum), &rowNumber, sizeof(rowNumber));
-		//Êı¾İ³¤¶Èuint32_t
+		//æ•°æ®é•¿åº¦uint32_t
 		memcpy(buff + MAX_TABLE_NAME_LEN + sizeof(table->TableFieldNum) + sizeof(rowNumber), &table->TableRowSize, sizeof(table->TableRowSize));
 		fs.write((const char*)buff, TABLE_HEAD_SIZE);
 		free(buff);
@@ -882,13 +886,13 @@ void StoreDatabase(string filePath, const DB& database) {
 				LogInfo("Unable to allocate memory", 12);
 				return;
 			}
-			//Ğ´ÈëÊôĞÔÃû
+			//å†™å…¥å±æ€§å
 			strcpy((char*)buff, field->FieldName.c_str());
-			//Ğ´ÈëÀàĞÍºÅuint8_t
+			//å†™å…¥ç±»å‹å·uint8_t
 			memcpy(buff + MAX_FIELD_NAME_LEN, &field->FieldType.id, sizeof(field->FieldType.id));
-			//Ğ´Èë³¤¶Èuint32_t
+			//å†™å…¥é•¿åº¦uint32_t
 			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id), &field->FieldSize, sizeof(field->FieldSize));
-			//Ğ´Èë±êÇ©uint32_t
+			//å†™å…¥æ ‡ç­¾uint32_t
 			memcpy(buff + MAX_FIELD_NAME_LEN + sizeof(field->FieldType.id) + sizeof(field->FieldSize), &field->FieldProperty, sizeof(field->FieldProperty));
 			fs.write((const char*)buff, FIELD_SIZE);
 			free(buff);
@@ -902,7 +906,7 @@ void StoreDatabase(string filePath, const DB& database) {
 	fs.close();
 }
 
-void LoadDatabase(string filePath, DB* database) {
+void LoadDatabase(string filePath, DB& database) {
 	ifstream fs;
 	fs.open(filePath, ios::in | ios::binary);
 	while (fs.peek() != EOF)
@@ -912,14 +916,14 @@ void LoadDatabase(string filePath, DB* database) {
 		uint32_t TableFieldNum;
 		uint64_t RowNumber;
 		uint32_t RowSize;
-		//¶ÁÈ¡±íÃû
+		//è¯»å–è¡¨å
 		fs.read(pTableName, MAX_TABLE_NAME_LEN);
 		pTable->TableName = pTableName;
-		//ÊôĞÔÊıÁ¿uint32_t
+		//å±æ€§æ•°é‡uint32_t
 		fs.read((char*)&TableFieldNum, sizeof(pTable->TableFieldNum));
-		//ĞĞÊıuint64_t
+		//è¡Œæ•°uint64_t
 		fs.read((char*)&RowNumber, sizeof(RowNumber));
-		//Êı¾İ³¤¶Èuint32_t
+		//æ•°æ®é•¿åº¦uint32_t
 		fs.read((char*)&RowSize, sizeof(RowSize));
 		for (uint32_t i = 0; i < TableFieldNum; i++)
 		{
@@ -928,29 +932,29 @@ void LoadDatabase(string filePath, DB* database) {
 			uint32_t FieldSize = 0;
 			uint32_t prop = 0;
 			const Datatype* datatype = nullptr;
-			//ÊôĞÔÃû
+			//å±æ€§å
 			fs.read(FieldName, MAX_FIELD_NAME_LEN);
-			//ÀàĞÍºÅuint8_t
+			//ç±»å‹å·uint8_t
 			fs.read((char*)&type, sizeof(uint8_t));
-			if (type == INT.id) {
-				datatype = &INT;
+			if (type == FieldType_INT.id) {
+				datatype = &FieldType_INT;
 			}
-			else if (type == FLOAT.id) {
-				datatype = &FLOAT;
+			else if (type == FieldType_FLOAT.id) {
+				datatype = &FieldType_FLOAT;
 			}
-			else if (type == CHAR.id) {
-				datatype = &CHAR;
+			else if (type == FieldType_CHAR.id) {
+				datatype = &FieldType_CHAR;
 			}
-			else if (type == BYTE.id) {
-				datatype = &BYTE;
+			else if (type == FieldType_BYTE.id) {
+				datatype = &FieldType_BYTE;
 			}
 			else {
 				LogInfo("Unknown data type.", 14);
 				return;
 			}
-			//³¤¶Èuint32_t
+			//é•¿åº¦uint32_t
 			fs.read((char*)&FieldSize, sizeof(uint32_t));
-			//±êÇ©uint32_t
+			//æ ‡ç­¾uint32_t
 			fs.read((char*)&prop, sizeof(uint32_t));
 
 			Field* pField = new Field(FieldName, *datatype, FieldSize / datatype->size, prop);
@@ -964,11 +968,11 @@ void LoadDatabase(string filePath, DB* database) {
 			pTable->InsertData(buff);
 		}
 		free(buff);
-		(*database)[pTable->TableName] = pTable;
+		(database)[pTable->TableName] = pTable;
 	}
 }
 
-void SQL(DB& db, string sql) {
+string SQL(DB& db, string sql) {
 	if (sql[sql.length() - 1] != ';') {
 		LogInfo("Missing semicolon at the end of SQL", 5);
 		sql = sql + ";";
@@ -996,24 +1000,28 @@ void SQL(DB& db, string sql) {
 		vector<string> selectVec = split(select, ",");
 		vector<string> fromVec = split(from, ",");
 		Table* fromTable = From(db, fromVec);
+		if (fromTable == nullptr) {
+			return "Table " + from + " Not found.";
+		}
 		auto rowList = fromTable->WhereFilter(strip(whereStr));
 		if (rowList == nullptr) {
-			return;
+			return "Syntax error around where";
 		}
 		Table* whereTable = Where(fromTable, *rowList);
 		if (whereTable == nullptr) {
-			return;
+			return "Syntax error around where ";
 		}
 		Table* selectTable = Select(whereTable, selectVec);
 		if (whereTable == nullptr) {
 			free(whereTable);
-			return;
+			return "Syntax error around select ";
 		}
-		selectTable->Print();
+		string result = (selectTable->Print());
 		delete (whereTable);
 		delete (rowList);
 		delete (fromTable);
 		delete (selectTable);
+		return result;
 	}
 	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
 		auto begin = sql.find("(");
@@ -1042,20 +1050,20 @@ void SQL(DB& db, string sql) {
 			transform(fieldInfo[1].begin(), fieldInfo[1].end(), fieldInfo[1].begin(), ::toupper);
 			const Datatype* pType = nullptr;
 			if (fieldInfo[1] == "INT") {
-				pType = &INT;
+				pType = &FieldType_INT;
 			}
 			else if (fieldInfo[1] == "FLOAT") {
-				pType = &FLOAT;
+				pType = &FieldType_FLOAT;
 			}
 			else if (fieldInfo[1] == "CHAR") {
-				pType = &CHAR;
+				pType = &FieldType_CHAR;
 			}
 			else if (fieldInfo[1] == "BYTE") {
-				pType = &BYTE;
+				pType = &FieldType_BYTE;
 			}
 			else {
 				LogInfo("Unknown data type.", 14);
-				return;
+				return "Unknown data type.";
 			}
 			uint32_t fieldProp = FIELD_PROPERTY_DEFAULT;
 			if (UpperField.find("PRIMARY KEY") != string::npos) {
@@ -1069,6 +1077,7 @@ void SQL(DB& db, string sql) {
 			pTable->AddField(pField);
 		}
 		db[pTable->TableName] = pTable;
+		return pTable->Print();
 	}
 	else if (upperSql.compare(0, 10, "INSERT INTO", 0, 10) == 0) {
 		auto sqlSplite = split(sql, " ");
@@ -1077,7 +1086,7 @@ void SQL(DB& db, string sql) {
 		auto LastLeftParenthese = sql.find_last_of("(");
 		auto FirstRightParenthese = sql.find_first_of(")");
 		auto LastRightParenthese = sql.find_last_of(")");
-		if (FirstLeftParenthese == LastLeftParenthese) {//È«²åÈë
+		if (FirstLeftParenthese == LastLeftParenthese) {//å…¨æ’å…¥
 			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
 			Table* pTable = db[tableName];
 			vector<string> allField;
@@ -1087,16 +1096,19 @@ void SQL(DB& db, string sql) {
 			}
 			Insert(db[tableName], allField, split(datastr, ","));
 		}
-		else {//Ö¸¶¨²åÈë
+		else {//æŒ‡å®šæ’å…¥
 			string fieldstr = sql.substr(FirstLeftParenthese + 1, FirstRightParenthese - FirstLeftParenthese - 1);
 			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
 			Insert(db[tableName], split(fieldstr, ","), split(datastr, ","));
-
 		}
+		return db[tableName]->Print();
+
 	}
 	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
+		return tableName + " Drop\n";
+
 	}
 	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
 		auto fromIndex = upperSql.find("FROM");//fromIndex+5
@@ -1116,6 +1128,7 @@ void SQL(DB& db, string sql) {
 		Delete(db[from], *rowList);
 		free(fromTable);
 		free(rowList);
+		return db[from]->Print();
 	}
 	else if (upperSql.compare(0, 5, "UPDATE", 0, 5) == 0) {
 		auto setIndex = upperSql.find("SET");
@@ -1131,7 +1144,7 @@ void SQL(DB& db, string sql) {
 		string tableName = sql.substr(7, setIndex - 7 - 1);
 		if (db.find(tableName) == db.end()) {
 			LogInfo("Table named '" + tableName + "' not found.", 15);
-			return;
+			return "Table named '" + tableName + "' not found.";
 		}
 		auto KeyValue = split(strip(sql.substr(setIndex + 3, whereIndex - setIndex - 3)), ",");
 		auto whereVec = db[tableName]->WhereFilter(whereStr);
@@ -1144,12 +1157,27 @@ void SQL(DB& db, string sql) {
 
 		Update(db[tableName], key, value, *whereVec);
 		delete whereVec;
+		return db[tableName]->Print();
+
 	}
+	else if (upperSql.compare(0, 3, "LOAD", 0, 3) == 0) {
+		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
+		LoadDatabase(filePath, db);
+		return "Load form " + filePath + "\n";
+	}
+	else if (upperSql.compare(0, 4, "STORE", 0, 4) == 0) {
+		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
+		StoreDatabase(filePath, db);
+		return "Store to " + filePath + "\n";
+	}
+	return "Unknown SQL.";
 }
 
 
-int main() {
+int __main() {
 	DB database = DB();
+
+	SQL(database, "LOAD TestDataBase.hex;");
 
 	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
 	auto startTime = clock();
@@ -1189,5 +1217,3 @@ int main() {
 
 	return 0;
 }
-
-
