@@ -269,6 +269,7 @@ public:
 		stack<string> res;
 		for (uint64_t index = 0; index < this->Data.size(); index++)
 		{
+			uint8_t* data = this->Data[index];
 			for (uint32_t i = 0; i < postFix.size(); i++)
 			{
 				if (postFix[i] == "<" || postFix[i] == "<=" ||
@@ -277,7 +278,7 @@ public:
 					postFix[i] == "AND" || postFix[i] == "OR")
 				{
 					if (res.size() < 2) {
-						LogInfo("Syntax error.", 16);
+						LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
 						return nullptr;
 					}
 					string a = res.top(); res.pop();
@@ -300,7 +301,7 @@ public:
 							ans = a;
 						}
 						else {
-							LogInfo("Syntax error at OR.", 16);
+							LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
 							return nullptr;
 						}
 					}
@@ -315,18 +316,26 @@ public:
 							ans = a;
 						}
 						else {
-							LogInfo("Syntax error at AND.", 16);
+							LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
 							return nullptr;
 						}
 					}
 					else {
 						if (isdigit(a[0]) == false && a[0] != '\'') {
+							if (this->FieldMap.find(a) == this->FieldMap.end()) {
+								LogInfo("Can not find Field named '" + a + "'.", 9);
+								return nullptr;
+							}
 							auto p = this->FieldMap[a];
 							typeIdA = p->FieldType.id;
 							beginA = p->Offset;
 							lengthA = p->FieldSize;
 						}
 						if (isdigit(b[0]) == false && b[0] != '\'') {
+							if (this->FieldMap.find(b) == this->FieldMap.end()) {
+								LogInfo("Can not find Field named '" + b + "'.", 9);
+								return nullptr;
+							}
 							auto p = this->FieldMap[b];
 							typeIdB = p->FieldType.id;
 							beginB = p->Offset;
@@ -334,11 +343,11 @@ public:
 						}
 						if (typeIdA != 0 && typeIdB != 0) {
 							if (typeIdA != typeIdB) {
-								LogInfo("Can not compare diferent type.", 14);
+								LogInfo("Can not compare different type.", 14);
 								return nullptr;
 							}
 							if (lengthA != lengthB) {
-								LogInfo("Can not compare diferent length.", 15);
+								LogInfo("Can not compare different length.", 15);
 								return nullptr;
 							}
 						}
@@ -372,19 +381,19 @@ public:
 						else if (typeIdA == 0 && typeIdB != 0) {//imm op data
 							if (typeIdB == INT.id) {
 								int32_t _a = atoi(a.c_str());
-								int32_t _b = *(int*)(this->Data[index] + beginB);
+								int32_t _b = *(int*)(data + beginB);
 								diff = _a - _b;
 							}
 							else if (typeIdB == FLOAT.id) {
 								double _a = atof(a.c_str());
-								double _b = *(double*)(this->Data[index] + beginB);
+								double _b = *(double*)(data + beginB);
 								diff = _a - _b;
 							}
 							else if (typeIdB == CHAR.id) {
-								diff = strcmp(a.c_str(), (char*)this->Data[index] + beginB);
+								diff = strcmp(a.c_str(), (char*)data + beginB);
 							}
 							else if (typeIdB == BYTE.id) {
-								diff = memcmp(a.c_str(), this->Data[index] + beginB, lengthB);
+								diff = memcmp(a.c_str(), data + beginB, lengthB);
 							}
 							else {
 								LogInfo("Unknown data type.", 14);
@@ -395,19 +404,19 @@ public:
 						else if (typeIdA != 0 && typeIdB == 0) {//data op imm
 							if (typeIdA == INT.id) {
 								int32_t _b = atoi(b.c_str());
-								int32_t _a = *(int*)(this->Data[index] + beginA);
+								int32_t _a = *(int*)(data + beginA);
 								diff = _a - _b;
 							}
 							else if (typeIdA == FLOAT.id) {
 								double _b = atof(b.c_str());
-								double _a = *(double*)(this->Data[index] + beginA);
+								double _a = *(double*)(data + beginA);
 								diff = _a - _b;
 							}
 							else if (typeIdA == CHAR.id) {
-								diff = memcmp(this->Data[index] + beginA, b.c_str(), lengthA);
+								diff = memcmp(data + beginA, b.c_str(), lengthA);
 							}
 							else if (typeIdA == BYTE.id) {
-								diff = memcmp(this->Data[index] + beginA, b.c_str(), lengthA);
+								diff = memcmp(data + beginA, b.c_str(), lengthA);
 							}
 							else {
 								LogInfo("Unknown data type.", 14);
@@ -417,20 +426,20 @@ public:
 						}
 						else if (typeIdA != 0 && typeIdB != 0) {//data op data
 							if (typeIdB == INT.id) {
-								int32_t _a = *(int*)(this->Data[index] + beginA);
-								int32_t _b = *(int*)(this->Data[index] + beginB);
+								int32_t _a = *(int*)(data + beginA);
+								int32_t _b = *(int*)(data + beginB);
 								diff = _a - _b;
 							}
 							else if (typeIdB == FLOAT.id) {
-								double _a = *(double*)(this->Data[index] + beginA);
-								double _b = *(double*)(this->Data[index] + lengthB);
+								double _a = *(double*)(data + beginA);
+								double _b = *(double*)(data + lengthB);
 								diff = _a - _b;
 							}
 							else if (typeIdB == CHAR.id) {
-								diff = memcmp(this->Data[index] + beginA, this->Data[index] + beginB, lengthA);
+								diff = memcmp(data + beginA, data + beginB, lengthA);
 							}
 							else if (typeIdB == BYTE.id) {
-								diff = memcmp(this->Data[index] + beginA, this->Data[index] + beginB, lengthA);
+								diff = memcmp(data + beginA, data + beginB, lengthA);
 							}
 							else {
 								LogInfo("Unknown data type.", 14);
@@ -605,17 +614,11 @@ Table* From(DB& pDatabase, const vector<string>& tableNameList) {
 	retTable->TableName = firstTable->TableName;
 	//Field Merge
 	for (uint32_t i = 0; i < firstTable->TableFieldNum; ++i) {
-		Field* f = (Field*)calloc(1, sizeof(Field));
-		if (f == NULL) {
-			LogInfo("Unable to allocate memory", 12);
-			return nullptr;
-		}
-
-		f->FieldName = firstTable->TableName + "." + firstTable->TableField[i]->FieldName;
-		f->FieldProperty = firstTable->TableField[i]->FieldProperty;
-		f->FieldSize = firstTable->TableField[i]->FieldSize;
-		f->FieldType = firstTable->TableField[i]->FieldType;
-		retTable->AddField(f);
+		auto FieldName = firstTable->TableName + "." + firstTable->TableField[i]->FieldName;
+		auto FieldProperty = firstTable->TableField[i]->FieldProperty;
+		auto FieldType = firstTable->TableField[i]->FieldType;
+		auto FieldSize = firstTable->TableField[i]->FieldSize / FieldType.size;
+		retTable->AddField(new Field(FieldName, FieldType, FieldSize, FieldProperty));
 	}
 	//Data Merge
 	for (auto iter = firstTable->Data.begin(); iter != firstTable->Data.end(); iter++) {
@@ -793,153 +796,11 @@ void Drop(DB& pDatabase, const string& tableName) {
 	return;
 }
 
-void SQL(DB& db, string sql) {
-	if (sql[sql.length() - 1] != ';') {
-		LogInfo("Missing semicolon at the end of SQL", 5);
-		sql = sql + ";";
-	}
-	string upperSql = sql;
-	transform(upperSql.begin(), upperSql.end(), upperSql.begin(), ::toupper);
-
-	if (upperSql.compare(0, 5, "SELECT", 0, 5) == 0) {
-		auto selectIndex = upperSql.find("SELECT");//selectIndex+7
-		auto fromIndex = upperSql.find("FROM");//fromIndex+5
-		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
-
-		string whereStr;
-		if (whereIndex == string::npos) {
-			whereIndex = upperSql.length() - 1;
-			whereStr = "";
-		}
-		else {
-			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
-
-		}
-		string select = sql.substr(selectIndex + 7, fromIndex - selectIndex - 7 - 1);
-		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
-
-		vector<string> selectVec = split(select, ",");
-		vector<string> fromVec = split(from, ",");
-		Table* fromTable = From(db, fromVec);
-		auto rowList = fromTable->WhereFilter(strip(whereStr));
-		Table* whereTable = Where(fromTable, *rowList);
-
-		Table* selectTable = Select(whereTable, selectVec);
-		selectTable->Print();
-		free(rowList);
-		free(fromTable);
-		free(selectTable);
-	}
-	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
-		auto begin = sql.find("(");
-		auto end = sql.rfind(")");
-		string tableNamestr = sql.substr(13, begin - 12 - 2);
-		Table* pTable = new Table(tableNamestr);
-		string fieldstr = sql.substr(begin + 1, end - begin - 1);
-		auto fields = split(fieldstr, ",");
-		for (uint32_t i = 0; i < fields.size(); ++i) {
-			uint32_t size = 0;
-
-			auto UpperField = fields[i];
-			transform(UpperField.begin(), UpperField.end(), UpperField.begin(), ::toupper);
-
-
-			auto sizebegin = fields[i].find("(");
-			auto sizeend = fields[i].find(")");
-			if (sizebegin == string::npos) {
-				size = 1;
-			}
-			else {
-				size = atoi(fields[i].substr(sizebegin + 1, sizeend - sizebegin - 1).c_str());
-				fields[i].erase(sizebegin, sizeend - sizebegin + 1);
-			}
-			auto fieldInfo = split(fields[i], " ");
-			transform(fieldInfo[1].begin(), fieldInfo[1].end(), fieldInfo[1].begin(), ::toupper);
-			const Datatype* pType = nullptr;
-			if (fieldInfo[1] == "INT") {
-				pType = &INT;
-			}
-			else if (fieldInfo[1] == "FLOAT") {
-				pType = &FLOAT;
-			}
-			else if (fieldInfo[1] == "CHAR") {
-				pType = &CHAR;
-			}
-			else if (fieldInfo[1] == "BYTE") {
-				pType = &BYTE;
-			}
-			else {
-				LogInfo("Unknown data type.", 14);
-				return;
-			}
-			uint32_t fieldProp = FIELD_PROPERTY_DEFAULT;
-			if (UpperField.find("PRIMARY KEY") != string::npos) {
-				fieldProp = fieldProp | FIELD_PROPERTY_PK;
-			}
-			if (UpperField.find("NOT NULL") != string::npos) {
-				fieldProp = fieldProp | FIELD_PROPERTY_NOT_NULL;
-			}
-
-			Field* pField = new Field(fieldInfo[0], *pType, size, fieldProp);
-			pTable->AddField(pField);
-		}
-		db[pTable->TableName] = pTable;
-	}
-	else if (upperSql.compare(0, 10, "INSERT INTO", 0, 10) == 0) {
-		auto sqlSplite = split(sql, " ");
-		string tableName = sqlSplite[2];
-		auto FirstLeftParenthese = sql.find_first_of("(");
-		auto LastLeftParenthese = sql.find_last_of("(");
-		auto FirstRightParenthese = sql.find_first_of(")");
-		auto LastRightParenthese = sql.find_last_of(")");
-		if (FirstLeftParenthese == LastLeftParenthese) {//全插入
-			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
-			Table* pTable = db[tableName];
-			vector<string> allField;
-			for (uint32_t i = 0; i < pTable->TableFieldNum; i++)
-			{
-				allField.push_back(pTable->TableField[i]->FieldName);
-			}
-			Insert(db[tableName], allField, split(datastr, ","));
-		}
-		else {//指定插入
-			string fieldstr = sql.substr(FirstLeftParenthese + 1, FirstRightParenthese - FirstLeftParenthese - 1);
-			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
-			Insert(db[tableName], split(fieldstr, ","), split(datastr, ","));
-
-		}
-	}
-	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
-		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
-		Drop(db, tableName);
-	}
-	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
-		auto fromIndex = upperSql.find("FROM");//fromIndex+5
-		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
-
-		string whereStr;
-		if (whereIndex == string::npos) {
-			whereIndex = upperSql.length() - 1;
-			whereStr = "";
-		}
-		else {
-			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
-		}
-		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
-		Table* fromTable = From(db, { from });
-		auto rowList = fromTable->WhereFilter(whereStr);
-		Delete(db[from], *rowList);
-		free(fromTable);
-		free(rowList);
-
-	}
-}
-
-void StoreDatabase(string filePath, DB* database) {
+void StoreDatabase(string filePath, const DB& database) {
 	ofstream fs;
 	fs.open(filePath, ios::out | ios::binary);
-	auto tableend = database->end();
-	for (auto iter = database->begin(); iter != tableend; ++iter)
+	auto tableend = database.end();
+	for (auto iter = database.begin(); iter != tableend; ++iter)
 	{
 		const Table* table = iter->second;
 		uint8_t* buff = (uint8_t*)calloc(1, TABLE_HEAD_SIZE);
@@ -1052,19 +913,177 @@ void LoadDatabase(string filePath, DB* database) {
 	}
 }
 
+void SQL(DB& db, string sql) {
+	if (sql[sql.length() - 1] != ';') {
+		LogInfo("Missing semicolon at the end of SQL", 5);
+		sql = sql + ";";
+	}
+	string upperSql = sql;
+	transform(upperSql.begin(), upperSql.end(), upperSql.begin(), ::toupper);
+
+	if (upperSql.compare(0, 5, "SELECT", 0, 5) == 0) {
+		auto selectIndex = upperSql.find("SELECT");//selectIndex+7
+		auto fromIndex = upperSql.find("FROM");//fromIndex+5
+		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
+
+		string whereStr;
+		if (whereIndex == string::npos) {
+			whereIndex = upperSql.length() - 1;
+			whereStr = "";
+		}
+		else {
+			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
+
+		}
+		string select = sql.substr(selectIndex + 7, fromIndex - selectIndex - 7 - 1);
+		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
+
+		vector<string> selectVec = split(select, ",");
+		vector<string> fromVec = split(from, ",");
+		Table* fromTable = From(db, fromVec);
+		auto rowList = fromTable->WhereFilter(strip(whereStr));
+		if (rowList == nullptr) {
+			return;
+		}
+		Table* whereTable = Where(fromTable, *rowList);
+		if (whereTable == nullptr) {
+			return;
+		}
+		Table* selectTable = Select(whereTable, selectVec);
+		if (whereTable == nullptr) {
+			free(whereTable);
+			return;
+		}
+		selectTable->Print();
+		free(whereTable);
+		free(rowList);
+		free(fromTable);
+		free(selectTable);
+	}
+	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
+		auto begin = sql.find("(");
+		auto end = sql.rfind(")");
+		string tableNamestr = sql.substr(13, begin - 12 - 2);
+		Table* pTable = new Table(tableNamestr);
+		string fieldstr = sql.substr(begin + 1, end - begin - 1);
+		auto fields = split(fieldstr, ",");
+		for (uint32_t i = 0; i < fields.size(); ++i) {
+			uint32_t size = 0;
+
+			auto UpperField = fields[i];
+			transform(UpperField.begin(), UpperField.end(), UpperField.begin(), ::toupper);
+
+
+			auto sizebegin = fields[i].find("(");
+			auto sizeend = fields[i].find(")");
+			if (sizebegin == string::npos) {
+				size = 1;
+			}
+			else {
+				size = atoi(fields[i].substr(sizebegin + 1, sizeend - sizebegin - 1).c_str());
+				fields[i].erase(sizebegin, sizeend - sizebegin + 1);
+			}
+			auto fieldInfo = split(fields[i], " ");
+			transform(fieldInfo[1].begin(), fieldInfo[1].end(), fieldInfo[1].begin(), ::toupper);
+			const Datatype* pType = nullptr;
+			if (fieldInfo[1] == "INT") {
+				pType = &INT;
+			}
+			else if (fieldInfo[1] == "FLOAT") {
+				pType = &FLOAT;
+			}
+			else if (fieldInfo[1] == "CHAR") {
+				pType = &CHAR;
+			}
+			else if (fieldInfo[1] == "BYTE") {
+				pType = &BYTE;
+			}
+			else {
+				LogInfo("Unknown data type.", 14);
+				return;
+			}
+			uint32_t fieldProp = FIELD_PROPERTY_DEFAULT;
+			if (UpperField.find("PRIMARY KEY") != string::npos) {
+				fieldProp = fieldProp | FIELD_PROPERTY_PK;
+			}
+			if (UpperField.find("NOT NULL") != string::npos) {
+				fieldProp = fieldProp | FIELD_PROPERTY_NOT_NULL;
+			}
+
+			Field* pField = new Field(fieldInfo[0], *pType, size, fieldProp);
+			pTable->AddField(pField);
+		}
+		db[pTable->TableName] = pTable;
+	}
+	else if (upperSql.compare(0, 10, "INSERT INTO", 0, 10) == 0) {
+		auto sqlSplite = split(sql, " ");
+		string tableName = sqlSplite[2];
+		auto FirstLeftParenthese = sql.find_first_of("(");
+		auto LastLeftParenthese = sql.find_last_of("(");
+		auto FirstRightParenthese = sql.find_first_of(")");
+		auto LastRightParenthese = sql.find_last_of(")");
+		if (FirstLeftParenthese == LastLeftParenthese) {//全插入
+			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
+			Table* pTable = db[tableName];
+			vector<string> allField;
+			for (uint32_t i = 0; i < pTable->TableFieldNum; i++)
+			{
+				allField.push_back(pTable->TableField[i]->FieldName);
+			}
+			Insert(db[tableName], allField, split(datastr, ","));
+		}
+		else {//指定插入
+			string fieldstr = sql.substr(FirstLeftParenthese + 1, FirstRightParenthese - FirstLeftParenthese - 1);
+			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
+			Insert(db[tableName], split(fieldstr, ","), split(datastr, ","));
+
+		}
+	}
+	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
+		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
+		Drop(db, tableName);
+	}
+	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
+		auto fromIndex = upperSql.find("FROM");//fromIndex+5
+		auto whereIndex = upperSql.find("WHERE");//whereIndex+6
+
+		string whereStr;
+		if (whereIndex == string::npos) {
+			whereIndex = upperSql.length() - 1;
+			whereStr = "";
+		}
+		else {
+			whereStr = sql.substr(whereIndex + 6, sql.length() - whereIndex - 7);
+		}
+		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
+		Table* fromTable = From(db, { from });
+		auto rowList = fromTable->WhereFilter(whereStr);
+		Delete(db[from], *rowList);
+		free(fromTable);
+		free(rowList);
+
+	}
+}
+
+
 int main() {
 
 	DB database = DB();
 
 	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
-	SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
-	SQL(database, "INSERT INTO Students (\'Alice\',10012,\'cs_001\',F);");
-	SQL(database, "INSERT INTO Students (\'Bob\',10013,\'cs_002\',M);");
-	SQL(database, "INSERT INTO Students (\'Monika\',10014,\'cs_002\',F);");
-	SQL(database, "INSERT INTO Students (\'Mike\',10015,\'cs_002\',M);");
-	SQL(database, "INSERT INTO Students (\'Peter\',10016,\'cs_003\',M);");
-	SQL(database, "INSERT INTO Students (\'Max\',10017,\'cs_003\',M);");
-	SQL(database, "SELECT * FROM Students ;");
+	auto startTime = clock();
+	auto times = 10000;
+	for (int i = 0; i < times; ++i) {
+		SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
+	}
+	cout << "insert " << times << " times used " << clock() - startTime << " ms" << endl;
+	SQL(database, "INSERT INTO Students ('Alice',10012,'cs_001',F);");
+	SQL(database, "INSERT INTO Students ('Bob',10013,'cs_002',M);");
+	SQL(database, "INSERT INTO Students ('Monika',10014,'cs_002',F);");
+	SQL(database, "INSERT INTO Students ('Mike',10015,'cs_002',M);");
+	SQL(database, "INSERT INTO Students ('Peter',10016,'cs_003',M);");
+	SQL(database, "INSERT INTO Students ('Max',10017,'cs_003',M);");
+	SQL(database, "SELECT * FROM Students where Students.no = 10012;");
 
 	SQL(database, "CREATE TABLE Score (no int PRIMARY KEY not null ,mark float,grade char);");
 	SQL(database, "INSERT INTO Score VALUES (10011,97.5,A);");
@@ -1076,14 +1095,7 @@ int main() {
 	SQL(database, "INSERT INTO Score VALUES (10017,55,F);");
 	SQL(database, "SELECT * FROM Score ;");
 
-	SQL(database, "SELECT Students.class,Students.no,Score.mark FROM Students,Score WHERE Students.no = Score.no;");
-
-	SQL(database, "DELETE FROM Students WHERE Students.class = \'cs_003\';");
-
-	SQL(database, "SELECT * FROM Students;");
-
-	SQL(database, "DELETE FROM Students;");
-	SQL(database, "DELETE * FROM Students;");
+	StoreDatabase("TestDataBase.hex", database);
 
 	SQL(database, "DROP TABLE Students;");
 	SQL(database, "DROP TABLE Score;");
