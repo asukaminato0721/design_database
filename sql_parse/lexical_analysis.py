@@ -262,45 +262,45 @@ def getStr(token):
     return str
 
 
-token = []
-syn = -1
-pProject = 0
-# https://stackoverflow.com/a/3430395/13040423
-with open(
-    os.path.join(pathlib.Path(__file__).parent.absolute(), "sql.txt"),
-    "r",
-    encoding="utf-8",
-) as f:
-    resourceProject = f.read()
-resourceProject.__add__("\0")
-print("过滤前的源程序：")
-print(resourceProject)
-resourceProject = filterResource(resourceProject, len(resourceProject) - 1)
-print("过滤后的程序为：")
-print(resourceProject)
-IdentifierTbl = []
-for i in range(1000):
-    IdentifierTbl.append("")
-while syn != 0:
-    syn, token, pProject = Scanner(syn, resourceProject, pProject)
-    if syn == 100:
-        for i in range(1000):
-            if IdentifierTbl[i] == token:
-                break
-            if IdentifierTbl[i] == "":
-                IdentifierTbl[i] = token
-                break
-        print("标识符：", getStr(token))
-        writeStr("(标识符 ," + getStr(token) + " )")
-    elif 1 <= syn <= len(reserveWord):
-        print("关键字:(%s , --)" % reserveWord[syn - 1])
-        writeStr("(" + reserveWord[syn - 1] + " , --)")
-    elif syn == 99:
-        print("常数：(%s , --)" % getStr(token))
-        writeStr("(常数 , " + getStr(token) + ")")
-    elif 50 <= syn <= 98:
-        print("(%s , --)" % operatorOrDelimiter[syn - 50])
-        writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
+# token = []
+# syn = -1
+# pProject = 0
+# # https://stackoverflow.com/a/3430395/13040423
+# with open(
+#     os.path.join(pathlib.Path(__file__).parent.absolute(), "sql.txt"),
+#     "r",
+#     encoding="utf-8",
+# ) as f:
+#     resourceProject = f.read()
+# resourceProject.__add__("\0")
+# print("过滤前的源程序：")
+# print(resourceProject)
+# resourceProject = filterResource(resourceProject, len(resourceProject) - 1)
+# print("过滤后的程序为：")
+# print(resourceProject)
+# IdentifierTbl = []
+# for i in range(1000):
+#     IdentifierTbl.append("")
+# while syn != 0:
+#     syn, token, pProject = Scanner(syn, resourceProject, pProject)
+#     if syn == 100:
+#         for i in range(1000):
+#             if IdentifierTbl[i] == token:
+#                 break
+#             if IdentifierTbl[i] == "":
+#                 IdentifierTbl[i] = token
+#                 break
+#         print("标识符：", getStr(token))
+#         writeStr("(标识符 ," + getStr(token) + " )")
+#     elif 1 <= syn <= len(reserveWord):
+#         print("关键字:(%s , --)" % reserveWord[syn - 1])
+#         writeStr("(" + reserveWord[syn - 1] + " , --)")
+#     elif syn == 99:
+#         print("常数：(%s , --)" % getStr(token))
+#         writeStr("(常数 , " + getStr(token) + ")")
+#     elif 50 <= syn <= 98:
+#         print("(%s , --)" % operatorOrDelimiter[syn - 50])
+#         writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
 
 
 def parse_sql() -> list:
@@ -333,34 +333,35 @@ def parse_sql() -> list:
                 if IdentifierTbl[i] == "":
                     IdentifierTbl[i] = token
                     break
-            print("标识符：", getStr(token))
-            writeStr("(标识符 ," + getStr(token) + " )")
+            # print("标识符：", getStr(token))
+            # writeStr("(标识符 ," + getStr(token) + " )")
             if len(result[-1]) == 1:
                 result[-1].append(getStr(token))
             elif len(result[-1]) == 2:
+                if result[-1][1][-1] not in operatorOrDelimiter and getStr(token) not in operatorOrDelimiter:
+                    result[-1][1] += " "
                 result[-1][1] += getStr(token)
             # print(result)
         elif 1 <= syn <= len(reserveWord):
-            print("关键字:(%s , --)" % reserveWord[syn - 1])
-            writeStr("(" + reserveWord[syn - 1] + " , --)")
+            # print("关键字:(%s , --)" % reserveWord[syn - 1])
+            # writeStr("(" + reserveWord[syn - 1] + " , --)")
             result.append([reserveWord[syn - 1]])
         elif syn == 99:
-            print("常数：(%s , --)" % getStr(token))
-            writeStr("(常数 , " + getStr(token) + ")")
+            # print("常数：(%s , --)" % getStr(token))
+            # writeStr("(常数 , " + getStr(token) + ")")
             if len(result[-1]) == 1:
                 result[-1].append(getStr(token))
             elif len(result[-1]) == 2:
                 result[-1][1] += getStr(token)
         elif 50 <= syn <= 98:
-            print("(%s , --)" % operatorOrDelimiter[syn - 50])
-            writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
+            # print("(%s , --)" % operatorOrDelimiter[syn - 50])
+            # writeStr("(" + operatorOrDelimiter[syn - 50] + " , --)")
             if len(result[-1]) == 1:
                 result[-1].append(getStr(token))
             elif len(result[-1]) == 2:
                 result[-1][1] += getStr(token)
-        print(result)
-    print(1)
+    return result
 
 
-out = parse_sql()
-print(out)
+# out = parse_sql()
+# print(out)
