@@ -94,3 +94,36 @@ public:
 
     TOKEN() { }
 };
+
+//创建用户
+void CreateUser()
+{
+    USER u;
+    string name,password;
+    printf("请输入注册用户名:");
+    cin >> name;
+    printf("\n");
+    printf("请输入注册密码:");
+    cin >> password;
+    printf("\n");
+    cout<<"-----------------------"<<endl;
+    string privileges;
+    cout << "请输入用户的类型：（超级用户:s  普通用户:o  不区分大小写）" << endl;
+    cin >> privileges;
+    printf("\n");
+    u.name = name;
+    u.password = password;
+    //赋予读写权限
+    for(int i = 0; i < privileges.length(); ++i){
+         if(privileges[i]=='s'||privileges[i]=='S')
+            u.right_super = "true";
+         else if(privileges[i]=='o'||privileges[i]=='O')
+            u.right_ordinary = "true";
+    }
+
+   //文件输入输出流，不存在则自动创建
+    ofstream fout;
+    fout.open("user.dat", ios::app);
+    fout << u.name << " " << u.password << " " << u.right_super << " " << u.right_ordinary << "\n" << endl;
+    fout.close();
+}
