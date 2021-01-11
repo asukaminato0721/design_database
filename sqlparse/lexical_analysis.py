@@ -253,7 +253,8 @@ def Scanner(syn, resourseproject, pProject):
         syn = 0
     else:
         print("error：there is no exist")
-        exit(0)
+        syn=0
+        # exit(0)
     return syn, token, pProject
 
 
