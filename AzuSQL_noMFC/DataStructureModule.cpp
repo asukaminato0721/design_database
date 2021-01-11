@@ -1013,7 +1013,6 @@ string SQL(DB& db, string sql) {
 			auto UpperField = fields[i];
 			transform(UpperField.begin(), UpperField.end(), UpperField.begin(), ::toupper);
 
-
 			auto sizebegin = fields[i].find("(");
 			auto sizeend = fields[i].find(")");
 			if (sizebegin == string::npos) {
@@ -1084,7 +1083,7 @@ string SQL(DB& db, string sql) {
 	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
-		return tableName + " Drop\n";
+		return tableName + "Drop\n";
 
 	}
 	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
@@ -1101,7 +1100,13 @@ string SQL(DB& db, string sql) {
 		}
 		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
 		Table* fromTable = From(db, { from });
+		if (fromTable == nullptr) {
+			return "Syntax error around from";
+		}
 		auto rowList = fromTable->WhereFilter(whereStr);
+		if (rowList == nullptr) {
+			return "Syntax error around where";
+		}
 		Delete(db[from], *rowList);
 		free(fromTable);
 		free(rowList);
@@ -1124,7 +1129,10 @@ string SQL(DB& db, string sql) {
 			return "Table named '" + tableName + "' not found.";
 		}
 		auto KeyValue = split(strip(sql.substr(setIndex + 3, whereIndex - setIndex - 3)), ",");
-		auto whereVec = db[tableName]->WhereFilter(whereStr);
+		auto rowList = db[tableName]->WhereFilter(whereStr);
+		if (rowList == nullptr) {
+			return "Syntax error around where";
+		}
 		vector<string> key, value;
 		for (uint32_t i = 0; i < KeyValue.size(); i++)
 		{
@@ -1132,8 +1140,8 @@ string SQL(DB& db, string sql) {
 			value.push_back(strip(split(KeyValue[i], "=")[1]));
 		}
 
-		Update(db[tableName], key, value, *whereVec);
-		delete whereVec;
+		Update(db[tableName], key, value, *rowList);
+		delete rowList;
 		return db[tableName]->Print();
 
 	}
@@ -1144,7 +1152,7 @@ string SQL(DB& db, string sql) {
 		for (auto i = db.begin(); i != db.end(); ++i) {
 			tableList += i->second->TableName + " ";
 		}
-		return "Load form " + filePath + "\r\n" + tableList;
+		return "Load form " + filePath + "\r\nTable list : " + tableList;
 	}
 	else if (upperSql.compare(0, 4, "STORE", 0, 4) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
