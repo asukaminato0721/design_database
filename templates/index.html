@@ -7,141 +7,231 @@
     <title>Bootstrap 4, from LayoutIt!</title>
 
     <!-- Stylesheet -->
-    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="bootstrap/css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="bootstrap/css/font-awesome.min.css">
-    <link rel="stylesheet" href="bootstrap/css/theme.css">
+    <link rel="stylesheet" href="bootstrap/css/vendor.css">
+    <link rel="stylesheet" href="bootstrap/css/style.css">
+    <link rel="stylesheet" href="bootstrap/css/responsive.css">
 
-    <script src="bootstrap/jquery/jquery-2.1.1.min.js"></script>
-    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="bootstrap/jquery/jquery-3.2.1.min.js"></script>
+    <!-- all plugins here -->
+    <script src="bootstrap/js/vendor.js"></script>
+    <!-- main js  -->
+    <script src="bootstrap/js/main.js"></script>
+    <script src="bootstrap/js/app.js"></script>
+    <style>
+        .navbar-area {
+            box-shadow: 10px 3px 4px #888888;
+        }
+        
+        .dmne-sidebar {
+            color: blue;
+            height: 300;
+            width: 200;
+        }
+    </style>
 </head>
 
-<body>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <nav class="navbar navbar-default">
-                    <div class="container-fluid">
-                        <!-- Brand and toggle get grouped for better mobile display -->
-                        <div class="navbar-header">
-                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                          <span class="sr-only">Toggle navigation</span>
-                          <span class="icon-bar"></span>
-                          <span class="icon-bar"></span>
-                          <span class="icon-bar"></span>
-                        </button>
-                            <a class="navbar-brand" href="#">Brand</a>
+<body class="layout-has-drawer">
+    <div class="container-fluid">
+        <div class="pd-top-80 app-layout-canvas">
+            <div class="height-480 app-layout-container">
+                <!--左侧文件夹视图-->
+                <aside class="app-layout-drawer">
+                    <div class="app-layout-drawer-scroll">
+                        <!-- Drawer logo -->
+                        <div id="logo" class="drawer-header">
+                            <a href="index.html"><img class="img-responsive" src="img/dbms.png" title="DBMS" alt="DBMS" /></a>
                         </div>
 
-                        <!-- Collect the nav links, forms, and other content for toggling -->
-                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                            <ul class="nav navbar-nav">
-                                <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
-                                <li><a href="#">Link</a></li>
-                                <li class="dropdown">
-                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="#">Action</a></li>
-                                        <li><a href="#">Another action</a></li>
-                                        <li><a href="#">Something else here</a></li>
-                                        <li role="separator" class="divider"></li>
-                                        <li><a href="#">Separated link</a></li>
-                                        <li role="separator" class="divider"></li>
-                                        <li><a href="#">One more separated link</a></li>
+                        <!-- Drawer navigation -->
+                        <nav class="drawer-main">
+                            <ul class="nav nav-drawer">
+                                <li class="nav-title">当前打开</li>
+                                <li class="nav-item"><a href="index.html"><i class=""></i> SQL1</a> </li>
+                                <li class="nav-item"> <a href="frontend_home.html"><i class=""></i> SQL2</a></li>
+
+                                <li class="nav-title">文件夹目录</li>
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="#"><i class=""></i>一号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_ui_buttons.html">Buttons</a></li>
+                                        <li><a href="base_ui_cards.html">Cards</a></li>
+                                        <li><a href="base_ui_cards_api.html">Cards API</a></li>
+                                        <li><a href="base_ui_layout.html">Layout</a></li>
+                                        <li><a href="base_ui_grid.html">Grid</a></li>
+                                        <li><a href="base_ui_icons.html">Icons</a></li>
+                                        <li><a href="base_ui_modals_tooltips.html">Modals / Tooltips</a></li>
+                                        <li><a href="base_ui_alerts_notify.html">Alerts / Notify</a></li>
+                                        <li><a href="base_ui_pagination.html">Pagination</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="#"><i class=""></i> 二号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_forms_elements.html">Elements</a></li>
+                                        <li><a href="base_forms_samples.html">Samples</a></li>
+                                        <li><a href="base_forms_pickers_select.html">Pickers &amp; Select</a></li>
+                                        <li><a href="base_forms_validation.html">Validation</a></li>
+                                        <li><a href="base_forms_wizard.html">Wizard</a></li>
+
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 三号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li class="active"><a href="base_tables_styles.html">Styles</a></li>
+                                        <li><a href="base_tables_responsive.html">Responsive</a></li>
+                                        <li><a href="base_tables_tools.html">Tools</a></li>
+                                        <li><a href="base_tables_pricing.html">Pricing</a></li>
+                                        <li> <a href="base_tables_datatables.html">Wizard</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 四号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                        <li><a href="base_pages_blank.html">Blank</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item nav-item-has-subnav">
+                                    <a href="javascript:void(0)"><i class=""></i> 五号数据库</a>
+                                    <ul class="nav nav-subnav">
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
+                                        <li><a href="base_js_sliders.html">Sliders</a></li>
                                     </ul>
                                 </li>
                             </ul>
-                            <form class="navbar-form navbar-left">
-                                <div class="form-group">
-                                    <input type="text" class="form-control" placeholder="Search">
+                        </nav>
+                        <!-- End drawer navigation -->
+                    </div>
+                </aside>
+                <div>
+                    <header class="app-layout-header per-10">
+                        <div class="navbar-area">
+                            <nav class="navbar navbar-expand-lg">
+                                <div class="container-fluid nav-container">
+                                    <div class="responsive-mobile-menu">
+                                        <button class="menu toggle-btn d-block d-lg-none" data-target="#themefie_main_menu" aria-expanded="false" aria-label="Toggle navigation">
+                                            <span class="sr-only">Toggle navigation</span>
+                                            <span class="icon-left"></span>
+                                            <span class="icon-right"></span>
+                                        </button>
+                                    </div>
+                                    <div class="nav-left-part">
+                                        <ul class="nav-left-part-list">
+                                            <li>
+                                                <div class="header-cat-menu">
+                                                    <i class="fa fa-th"></i>
+                                                    <a href="#">文件</a>
+                                                    <i class="fa fa-caret-down"></i>
+                                                    <ul>
+                                                        <li><a href="#"><i class="fa fa-building"></i>打开数据库</a></li>
+                                                        <li><a href="#"><i class="fa fa-th"></i> 新建连接</a></li>
+                                                        <li><a href="#"><i class="fa fa-code"></i> 新建查询编辑器</a></li>
+                                                        <li><a href="#"><i class="fa fa-clone"></i> 保存</a></li>
+                                                        <li><a href="#"><i class="fa fa-pencil-square-o"></i> 退出</a></li>
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="main-search-inner main-search-bg ml-3">
+                                                    <i class="fa fa-search"></i>
+                                                    <input type="text" placeholder="Search Here">
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="collapse navbar-collapse" id="themefie_main_menu">
+                                        <ul class="navbar-nav menu-open text-left pl-lg-5">
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <a href="#">编辑</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="index.html">刷新数据库</a></li>
+                                                    <li><a href="index-2.html">执行 查询</a></li>
+                                                    <li><a href="index-3.html">撤销</a></li>
+                                                    <li><a href="index-4.html">重做</a></li>
+                                                    <li><a href="index-4.html">粘贴</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <a href="#">数据库</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="about.html">创建数据库</a></li>
+                                                    <li><a href="course.html">改变数据库</a></li>
+                                                    <li><a href="course-view.html">导入</a></li>
+                                                    <li><a href="course-view-2.html">导出</a></li>
+                                                    <li><a href="instructor.html">备份</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <i class="fa fa-folder"></i>
+                                                <a href="#">表单</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="">打开表</a></li>
+                                                    <li><a href="">创建表</a></li>
+                                                    <li><a href="">改变表</a></li>
+                                                    <li><a href="">管理索引</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="menu-item-has-children current-menu-item">
+                                                <i class="fa fa-eercast"></i>
+                                                <a href="#">工具</a>
+                                                <ul class="sub-menu">
+                                                    <li><a href="">历史记录</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="collapse navbar-collapse">
+                                        <a class="btn btn-white log-in" href="#">登录</a>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-default">Submit</button>
-                            </form>
-                            <ul class="nav navbar-nav navbar-right">
-                                <li><a href="#">Link</a></li>
-                                <li class="dropdown">
-                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="#">Action</a></li>
-                                        <li><a href="#">Another action</a></li>
-                                        <li><a href="#">Something else here</a></li>
-                                        <li role="separator" class="divider"></li>
-                                        <li><a href="#">Separated link</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
+                            </nav>
                         </div>
-                        <!-- /.navbar-collapse -->
-                    </div>
-                    <!-- /.container-fluid -->
-                </nav>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-3 col-lg-3">
-                <div class="list-group">
-                    <a href="#" class="list-group-item list-group-item-action active">Home</a>
-                    <div class="list-group-item">
-                        List header
-                    </div>
-                    <div class="list-group-item">
-                        <h4 class="list-group-item-heading">
-                            List group item heading
-                        </h4>
-                        <p class="list-group-item-text">
-                            ...
-                        </p>
-                    </div>
-                    <div class="list-group-item justify-content-between">
-                        Help <span class="badge badge-secondary badge-pill">14</span>
-                    </div> <a href="#" class="list-group-item list-group-item-action active justify-content-between">Home <span class="badge badge-light badge-pill">14</span></a>
-                </div>
-            </div>
-            <div class="col-md-9 col-lg-9">
+                    </header>
+                    <main class="app-layout-content text-view per-70">
+                        <ul class="nav nav-tabs">
+                            <li role="presentation" class="active"><a href="#">SQL1</a></li>
+                            <li role="presentation"><a href="#">SQL2</a></li>
+                            <li role="presentation"><a href="#">SQL3</a></li>
+                        </ul>
+                        <div class="text-input-view">
+                            <textarea class="text-input"></textarea>
+                            <div class="submit-view">
+                                <a type="button" class="btn btn-primary" href="">提交</a>
+                            </div>
+                        </div>
+                    </main>
 
-                <button type="button" class="btn btn-outline-success">
-				纽扣
-			</button>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12 col-lg-12">
-                <ul class="nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#">Messages</a>
-                    </li>
-                    <li class="nav-item dropdown ml-md-auto">
-                        <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown">Dropdown link</a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
-                            <div class="dropdown-divider">
-                            </div> <a class="dropdown-item" href="#">Separated link</a>
-                        </div>
-                    </li>
-                </ul>
-                <h2>
-                    Heading
-                </h2>
-                <p>
-                    Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                </p>
-                <p>
-                    <a class="btn" href="#">View details »</a>
-                </p>
+                    <div class="container-fluid per-20">
+                        <ul class="nav nav-tabs">
+                            <li role="presentation" class="active"><a href="#">运行结果</a></li>
+                            <li role="presentation"><a href="#">表数据</a></li>
+                            <li role="presentation"><a href="#">控制台</a></li>
+                        </ul>
+                        <a class="row height-120 ouput">
+                            1111111
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/scripts.js"></script>
+    <!-- AppUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock and App.js -->
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/bootstrap.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.slimscroll.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.scrollLock.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/core/jquery.placeholder.min.js"></script>
+    <script src="http://v.bootstrapmb.com/2020/12/d65dr9411/assets/js/app-custom.js"></script>
 </body>
-
-</html>

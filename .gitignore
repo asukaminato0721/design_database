@@ -8,7 +8,10 @@ AzuSQL/.vs/
 AzuSQL/Debug/
 AzuSQL/Release/
 AzuSQL/x64/
-
+AzuSQL_noMFC/.vs/
+AzuSQL_noMFC/Debug/
+AzuSQL_noMFC/Release/
+AzuSQL_noMFC/x64/
 # C extensions
 *.so
 

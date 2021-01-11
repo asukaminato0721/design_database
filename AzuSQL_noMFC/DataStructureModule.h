@@ -2,7 +2,6 @@
 
 #include <bits/stdc++.h>
 using namespace std;
-class ExchangeData;
 class Table;
 class Field;
 typedef map<string, Table*> DB;
