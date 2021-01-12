@@ -1,0 +1,31 @@
+{% include "./template.html" %}
+
+<div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-2">{% include "./sidebar.html" %}</div>
+  <div class="col-md-8">
+    {% for table in tables%}
+    <h3>{{table.0}}</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          {% for item in table.1%}
+          <th>{{ item }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in table.2%}
+        <tr>
+          {% for each_item in item %}
+          <td>{{each_item}}</td>
+          {% endfor%}
+        </tr>
+        {% endfor%}
+      </tbody>
+    </table>
+    {% endfor%}
+  </div>
+  <div class="col-md-1"></div>
+</div>
+{% include "./scripts.html"%}
