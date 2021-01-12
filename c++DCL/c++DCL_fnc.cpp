@@ -152,6 +152,28 @@ USER StringToUser(string s)
 	return temp;
 }
 
+// 读取文件并比较，相同则返回该用户，否则返回空用户
+USER UserCompare(string name, string password)
+{
+    USER temp;
+    ifstream fin;
+    fin.open("user.dat");//打开文件
+    bool find = false;
+    string s;
+    while(!fin.eof())
+    {
+        getline(fin, s);
+    	temp = StringToUser(s);
+    	if(temp.name == name && temp.password == password)
+        {
+            fin.close();
+            return temp;
+        }
+    }
+    fin.close();
+    USER t;
+    return t;
+}
 
 
 //创建用户
