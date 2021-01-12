@@ -1,2 +1,2 @@
-select Student.No from Student a,Score b where a.no=b.no
+select a.No from Student a where a.no = 1
 $
