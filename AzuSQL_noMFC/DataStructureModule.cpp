@@ -7,7 +7,7 @@
 #include "./DataStructureModule.h"
 using namespace std;
 
-
+//TODO delete 中不允许完整属性名
 
 
 // https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
@@ -538,6 +538,7 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 		return nullptr;
 	}
 	memset(buff, 0, pTable->TableRowSize);
+
 	for (uint32_t i = 0; i < fieldNameList.size(); ++i) {
 		auto iter = pTable->FieldMap.find(fieldNameList[i]);
 		if (iter == pTable->FieldMap.end()) {
@@ -547,6 +548,34 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 		auto type = iter->second->FieldType.id;
 		auto offset = iter->second->Offset;
 		auto length = iter->second->FieldSize;
+		bool isPK = iter->second->FieldProperty & FIELD_PROPERTY_PK;
+
+		if (isPK == true) {
+			for (uint64_t j = 0; j < pTable->Data.size(); j++)
+			{
+				int32_t diff = 1;
+				if (type == FieldType_INT.id) {
+					diff = atoi(valuesList[i].c_str()) - atoi((char*)pTable->Data[j] + offset);
+				}
+				else if (type == FieldType_FLOAT.id)
+				{
+					double value = atof(valuesList[i].c_str()) - atof((char*)pTable->Data[j] + offset);
+					diff = (value != 0);
+				}
+				else if (type == FieldType_CHAR.id || type == FieldType_BYTE.id) {
+					diff = memcmp(pTable->Data[j] + offset, (uint8_t*)valuesList[i].c_str(), length);
+				}
+				else {
+					LogInfo("Field type unknown.", 15);
+					return nullptr;
+				}
+				if (diff == 0) {
+					LogInfo("Primary key duplicate", 3);
+					return nullptr;
+				}
+			}
+		}
+
 		if (type == FieldType_INT.id) {
 			int value = atoi(valuesList[i].c_str());
 			memcpy(buff + offset, &value, length);
@@ -950,6 +979,9 @@ void LoadDatabase(string filePath, DB& database) {
 }
 
 string SQL(DB& db, string sql) {
+	if (sql == "") {
+		return "";
+	}
 	if (sql[sql.length() - 1] != ';') {
 		LogInfo("Missing semicolon at the end of SQL", 5);
 		sql = sql + ";";
@@ -1065,6 +1097,10 @@ string SQL(DB& db, string sql) {
 		if (FirstLeftParenthese == LastLeftParenthese) {//全插入
 			string datastr = sql.substr(LastLeftParenthese + 1, LastRightParenthese - LastLeftParenthese - 1);
 			Table* pTable = db[tableName];
+			if (pTable == nullptr) {
+				LogInfo("Table not found : " + tableName, 16);
+				return "Table not found : " + tableName;
+			}
 			vector<string> allField;
 			for (uint32_t i = 0; i < pTable->TableFieldNum; i++)
 			{
@@ -1080,7 +1116,7 @@ string SQL(DB& db, string sql) {
 		return db[tableName]->Print();
 
 	}
-	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
+	else if (upperSql.compare(0, 9,  "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
 		return tableName + "Drop\n";
@@ -1112,7 +1148,7 @@ string SQL(DB& db, string sql) {
 		free(rowList);
 		return db[from]->Print();
 	}
-	else if (upperSql.compare(0, 5, "UPDATE", 0, 5) == 0) {
+	else if (upperSql.compare(0, 5,  "UPDATE", 0, 5) == 0) {
 		auto setIndex = upperSql.find("SET");
 		auto whereIndex = upperSql.find("WHERE");
 		string whereStr;
@@ -1145,7 +1181,7 @@ string SQL(DB& db, string sql) {
 		return db[tableName]->Print();
 
 	}
-	else if (upperSql.compare(0, 3, "LOAD", 0, 3) == 0) {
+	else if (upperSql.compare(0, 3,  "LOAD", 0, 3) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
 		LoadDatabase(filePath, db);
 		string tableList;
@@ -1154,7 +1190,7 @@ string SQL(DB& db, string sql) {
 		}
 		return "Load form " + filePath + "\r\nTable list : " + tableList;
 	}
-	else if (upperSql.compare(0, 4, "STORE", 0, 4) == 0) {
+	else if (upperSql.compare(0, 4,  "STORE", 0, 4) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
 		StoreDatabase(filePath, db);
 		return "Store to " + filePath + "\n";
@@ -1165,52 +1201,33 @@ string SQL(DB& db, string sql) {
 int main() {
 	DB database = DB();
 
+	LoadDatabase("TestDataBase.hex", database);
+	SQL(database, "CREATE TABLE test1 (a int PRIMARY KEY,b char(1020));");
+	for (int i = 0; i < 100; ++i) {
+		SQL(database, "INSERT INTO test1 VALUES (" + to_string(i) + ",'test');");
+	}
+
+
 	while (true)
 	{
 		string input;
 		getline(cin, input);
-		cout << SQL(database, input) << endl;
+		auto begin = clock();
+		auto ans = SQL(database, input);
+		auto end = clock();
+		if (ans.size() < 100000) {
+			cout << ans << endl;
+		}
+		else {
+			cout << "Result too long" << endl;
+		}
+		cout << "Exec " << end - begin << " ms" << endl;
+
 	}
 
 	return 0;
 
-	SQL(database, "LOAD TestDataBase.hex;");
-
-	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
-	auto startTime = clock();
-	auto times = 10000;
-	for (int i = 0; i < times; ++i) {
-		//SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
-	}
-	cout << "insert " << times << " times used " << clock() - startTime << " ms" << endl;
-	SQL(database, "INSERT INTO Students ('Alice',10012,'cs_001',F);");
-	SQL(database, "INSERT INTO Students ('Bob',10013,'cs_002',M);");
-	SQL(database, "INSERT INTO Students ('Monika',10014,'cs_002',F);");
-	SQL(database, "INSERT INTO Students ('Mike',10015,'cs_002',M);");
-	SQL(database, "INSERT INTO Students ('Peter',10016,'cs_003',M);");
-	SQL(database, "INSERT INTO Students ('Max',10017,'cs_003',M);");
-	SQL(database, "SELECT * FROM Students;");
-
-	SQL(database, "UPDATE Students SET name = 'Azura',class = 'cs_004' where no = 10014;");
-	SQL(database, "SELECT * FROM Students;");
-
-
-	SQL(database, "CREATE TABLE Score (no int PRIMARY KEY not null ,mark float,grade char);");
-	SQL(database, "INSERT INTO Score VALUES (10011,97.5,A);");
-	SQL(database, "INSERT INTO Score VALUES (10012,92.5,A);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10013);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10014);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10015);");
-	SQL(database, "INSERT INTO Score VALUES (10016,88,B);");
-	SQL(database, "INSERT INTO Score VALUES (10017,55,F);");
-	SQL(database, "SELECT * FROM Score ;");
-
-	StoreDatabase("TestDataBase.hex", database);
-
-	SQL(database, "DROP TABLE Students;");
-	SQL(database, "DROP TABLE Score;");
 
 	_CrtDumpMemoryLeaks();
 
-	return 0;
 }

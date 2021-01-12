@@ -7,7 +7,7 @@
 #include "./DataStructureModule.h"
 using namespace std;
 
-
+//TODO delete 中不允许完整属性名
 
 
 // https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
@@ -66,34 +66,7 @@ void LogInfo(string msg, uint8_t level) {
 	}
 }
 
-/// <summary>
-/// 数据交换格式（pData是引用）
-/// </summary>
-class ExchangeData
-{
-public:
-	struct exData
-	{
-		uint8_t* pData;
-		uint32_t length;
-	};
-	map<string, ExchangeData::exData*>DataTuple;
-	~ExchangeData()
-	{
-		auto iter = this->DataTuple.begin();
-		for (iter = this->DataTuple.begin(); iter != this->DataTuple.end(); iter++) {
-			free(iter->second);
-		}
-		this->DataTuple.clear();
-	}
-	uint8_t* Data(string key) {
-		return this->DataTuple[key]->pData;
-	}
-	uint32_t Length(string key) {
-		return this->DataTuple[key]->length;
-	}
 
-};
 
 //属性名+类型号+长度+标签
 #define FIELD_SIZE (MAX_FIELD_NAME_LEN+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
@@ -509,7 +482,7 @@ public:
 		res << "========================================================" << "\r\n";
 		res << "[Table Name : " << this->TableName << "]" << "\r\n";
 		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			res << setw(15) << this->TableField[i]->FieldName << endl;
+			res << setw(15) << this->TableField[i]->FieldName;
 		}
 		res << "\r\n";
 		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
@@ -565,6 +538,7 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 		return nullptr;
 	}
 	memset(buff, 0, pTable->TableRowSize);
+
 	for (uint32_t i = 0; i < fieldNameList.size(); ++i) {
 		auto iter = pTable->FieldMap.find(fieldNameList[i]);
 		if (iter == pTable->FieldMap.end()) {
@@ -574,6 +548,34 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 		auto type = iter->second->FieldType.id;
 		auto offset = iter->second->Offset;
 		auto length = iter->second->FieldSize;
+		bool isPK = iter->second->FieldProperty & FIELD_PROPERTY_PK;
+
+		if (isPK == true) {
+			for (uint64_t j = 0; j < pTable->Data.size(); j++)
+			{
+				int32_t diff = 1;
+				if (type == FieldType_INT.id) {
+					diff = atoi(valuesList[i].c_str()) - atoi((char*)pTable->Data[j] + offset);
+				}
+				else if (type == FieldType_FLOAT.id)
+				{
+					double value = atof(valuesList[i].c_str()) - atof((char*)pTable->Data[j] + offset);
+					diff = (value != 0);
+				}
+				else if (type == FieldType_CHAR.id || type == FieldType_BYTE.id) {
+					diff = memcmp(pTable->Data[j] + offset, (uint8_t*)valuesList[i].c_str(), length);
+				}
+				else {
+					LogInfo("Field type unknown.", 15);
+					return nullptr;
+				}
+				if (diff == 0) {
+					LogInfo("Primary key duplicate", 3);
+					return nullptr;
+				}
+			}
+		}
+
 		if (type == FieldType_INT.id) {
 			int value = atoi(valuesList[i].c_str());
 			memcpy(buff + offset, &value, length);
@@ -907,6 +909,10 @@ void StoreDatabase(string filePath, const DB& database) {
 }
 
 void LoadDatabase(string filePath, DB& database) {
+	for (auto iter = database.begin(); iter != database.end(); ++iter) {
+		delete iter->second;
+	}
+	database.clear();
 	ifstream fs;
 	fs.open(filePath, ios::in | ios::binary);
 	while (fs.peek() != EOF)
@@ -973,6 +979,9 @@ void LoadDatabase(string filePath, DB& database) {
 }
 
 string SQL(DB& db, string sql) {
+	if (sql == "") {
+		return "";
+	}
 	if (sql[sql.length() - 1] != ';') {
 		LogInfo("Missing semicolon at the end of SQL", 5);
 		sql = sql + ";";
@@ -1035,7 +1044,6 @@ string SQL(DB& db, string sql) {
 
 			auto UpperField = fields[i];
 			transform(UpperField.begin(), UpperField.end(), UpperField.begin(), ::toupper);
-
 
 			auto sizebegin = fields[i].find("(");
 			auto sizeend = fields[i].find(")");
@@ -1107,7 +1115,7 @@ string SQL(DB& db, string sql) {
 	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
-		return tableName + " Drop\n";
+		return tableName + "Drop\n";
 
 	}
 	else if (upperSql.compare(0, 10, "DELETE FROM", 0, 10) == 0) {
@@ -1124,7 +1132,13 @@ string SQL(DB& db, string sql) {
 		}
 		string from = strip(sql.substr(fromIndex + 5, whereIndex - fromIndex - 5));
 		Table* fromTable = From(db, { from });
+		if (fromTable == nullptr) {
+			return "Syntax error around from";
+		}
 		auto rowList = fromTable->WhereFilter(whereStr);
+		if (rowList == nullptr) {
+			return "Syntax error around where";
+		}
 		Delete(db[from], *rowList);
 		free(fromTable);
 		free(rowList);
@@ -1147,7 +1161,10 @@ string SQL(DB& db, string sql) {
 			return "Table named '" + tableName + "' not found.";
 		}
 		auto KeyValue = split(strip(sql.substr(setIndex + 3, whereIndex - setIndex - 3)), ",");
-		auto whereVec = db[tableName]->WhereFilter(whereStr);
+		auto rowList = db[tableName]->WhereFilter(whereStr);
+		if (rowList == nullptr) {
+			return "Syntax error around where";
+		}
 		vector<string> key, value;
 		for (uint32_t i = 0; i < KeyValue.size(); i++)
 		{
@@ -1155,8 +1172,8 @@ string SQL(DB& db, string sql) {
 			value.push_back(strip(split(KeyValue[i], "=")[1]));
 		}
 
-		Update(db[tableName], key, value, *whereVec);
-		delete whereVec;
+		Update(db[tableName], key, value, *rowList);
+		delete rowList;
 		return db[tableName]->Print();
 
 	}
@@ -1167,7 +1184,7 @@ string SQL(DB& db, string sql) {
 		for (auto i = db.begin(); i != db.end(); ++i) {
 			tableList += i->second->TableName + " ";
 		}
-		return "Load form " + filePath + "\r\n" + tableList;
+		return "Load form " + filePath + "\r\nTable list : " + tableList;
 	}
 	else if (upperSql.compare(0, 4, "STORE", 0, 4) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
@@ -1177,46 +1194,32 @@ string SQL(DB& db, string sql) {
 	return "Unknown SQL.";
 }
 
-int __main() {
+int main() {
 	DB database = DB();
 
-	SQL(database, "LOAD TestDataBase.hex;");
-
-	SQL(database, "CREATE TABLE Students (name char(32) ,no int PRIMARY KEY not null,class char(32),gender char);");
-	auto startTime = clock();
-	auto times = 10000;
-	for (int i = 0; i < times; ++i) {
-		//SQL(database, "INSERT INTO Students (\'Azura\',10011,\'cs_001\',M);");
+	LoadDatabase("TestDataBase.hex", database);
+	SQL(database, "CREATE TABLE test1 (a int PRIMARY KEY,b char(1020));");
+	for (int i = 0; i < 100; ++i) {
+		SQL(database, "INSERT INTO test1 VALUES (" + to_string(i) + ",'test');");
 	}
-	cout << "insert " << times << " times used " << clock() - startTime << " ms" << endl;
-	SQL(database, "INSERT INTO Students ('Alice',10012,'cs_001',F);");
-	SQL(database, "INSERT INTO Students ('Bob',10013,'cs_002',M);");
-	SQL(database, "INSERT INTO Students ('Monika',10014,'cs_002',F);");
-	SQL(database, "INSERT INTO Students ('Mike',10015,'cs_002',M);");
-	SQL(database, "INSERT INTO Students ('Peter',10016,'cs_003',M);");
-	SQL(database, "INSERT INTO Students ('Max',10017,'cs_003',M);");
-	SQL(database, "SELECT * FROM Students;");
-
-	SQL(database, "UPDATE Students SET name = 'Azura',class = 'cs_004' where no = 10014;");
-	SQL(database, "SELECT * FROM Students;");
 
 
-	SQL(database, "CREATE TABLE Score (no int PRIMARY KEY not null ,mark float,grade char);");
-	SQL(database, "INSERT INTO Score VALUES (10011,97.5,A);");
-	SQL(database, "INSERT INTO Score VALUES (10012,92.5,A);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10013);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10014);");
-	SQL(database, "INSERT INTO Score (no) VALUES (10015);");
-	SQL(database, "INSERT INTO Score VALUES (10016,88,B);");
-	SQL(database, "INSERT INTO Score VALUES (10017,55,F);");
-	SQL(database, "SELECT * FROM Score ;");
+	while (true)
+	{
+		string input;
+		getline(cin, input);
+		auto begin = clock();
+		auto ans = SQL(database, input);
+		auto end = clock();
 
-	StoreDatabase("TestDataBase.hex", database);
+		cout << ans << endl;
+		cout << "Exec " << end - begin << " ms" << endl;
 
-	SQL(database, "DROP TABLE Students;");
-	SQL(database, "DROP TABLE Score;");
+	}
+
+	return 0;
+
 
 	_CrtDumpMemoryLeaks();
 
-	return 0;
 }
