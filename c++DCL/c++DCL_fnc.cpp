@@ -228,3 +228,23 @@ void CreateGrant_op(string op, int &flag)//建立授权
 
     return;
 }
+
+void CreateRevoke_op(string op, int &flag)//建立撤销授权
+{
+    string s = "revoke ";
+    int f = 1;
+    for(int i = 0; i < s.length(); ++i)
+    {
+        if(op[i] != s[i])
+        {
+            f = 0; break;
+        }
+    }
+    if(f)
+    {
+        flag = 8;
+        CreatRevoke(op);
+    }
+
+    return;
+}
