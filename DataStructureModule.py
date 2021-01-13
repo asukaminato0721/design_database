@@ -41,10 +41,10 @@ class Table:
     TableName: str = ""
     # cols in the table
     # Eg: [Field1(Name,TEXT),Field2(Gender,TEXT),Field3(Age,INTERGER)]
-    TableField: List[Field] = field(default_factory=list)
+    TableField: List[Field] = field(default_factory=List[Field])
     # Rows in the table
     # Eg: [(Zhangsan,Male,14),(lisi,Male,16),(Wanghong,Female,15)]
-    TableData: List[tuple] = field(default_factory=list)
+    TableData: List[tuple] = field(default_factory=List[tuple])
 
 
 # ======================== Class definition end ========================
@@ -149,16 +149,12 @@ def Where(table: Table, constraints: Callable[[dict], bool]) -> Table:
     `constraints` should be a lambda expression\n
     Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
     """
-    retTable = Table()
-    retTable.TableField = table.TableField
-    retTable.TableName = table.TableName
-
+    retTable = Table(TableField=table.TableField, TableName=table.TableName)
     fieldName = [field.FieldName for field in table.TableField]
     for rows in table.TableData:
         line = dict(zip(fieldName, rows))
         if constraints(line):
-            col = [line[fname] for fname in fieldName]
-            retTable.TableData.append(tuple(col))
+            retTable.TableData.append(tuple(line[fname] for fname in fieldName))
     return retTable
 
 

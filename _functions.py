@@ -146,6 +146,12 @@ def getResult(
         )
     return convertTableToJson(result_table)
 
+#解析sql语句
+def sql(sql):
+    
+
+
+    return
 
 if __name__ == "__main__":
     print(getResult("select No from Student,Score where No>=10014"))

@@ -6,8 +6,8 @@ from database_data import all_tables, all_database
 
 # https://stackoverflow.com/a/45874916/13040423
 sys.path.append("..")
-from _functions import getResult
-
+# from _functions import getResult
+from SqlParse import parser
 
 # Create your views here.
 
@@ -15,21 +15,11 @@ from _functions import getResult
 # Create your views here.
 def select(request: HttpRequest, db: str = "") -> HttpResponse:
     # https://www.runoob.com/django/django-form.html
-    query_cmd = request.GET.get(
-        "query_cmd", "select a.No from Student a where a.no = 1"
-    )
+    query_cmd = request.GET.get("query_cmd", "select * from Student")
     print(query_cmd)
-    提示语句 = ""
-    if not query_cmd:
-        提示语句 = f"您未输入查询"
-    else:
-        提示语句 = f"您输入的查询是{query_cmd}"
-    query_result = [
-        {"idx": 1, "item": 123},
-        {"idx": 2, "item": 234},
-    ]
-    name, headings, values = getResult(query_cmd)
-    当前页面 = "select"
+    # name, headings, values = getResult(query_cmd)
+    print(parser.getResult(query_cmd))
+    query_cmd = parser.getResult(query_cmd)
     return render(
         request,
         "index.html",
