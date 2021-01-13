@@ -4,7 +4,7 @@ from DataStructureModule import *
 from sql_parse.lexical_analysis import parse_sql
 from dataclasses import dataclass
 
-reserved_words = ["+", "-", ">", "<", "="]
+calculators = ["+", "-", ">", "<", "="]
 
 
 @dataclass
@@ -24,6 +24,8 @@ def extract_tables(table_str: str) -> dict:
     tables = {}
     table_list = table_str.split(",")
     for item in table_list:
+        if len(item.split(" "))==1:
+            continue
         if item.split(" ")[1] in tables:
             if item.split(" ")[0] != tables[item.split(" ")[1]]:
                 return {}
@@ -43,14 +45,58 @@ def format_parsed(parsed: Parsed, tables: dict = {}, tables_cols: dict = {}):
                 tableName = list(parsed.columns[i].split("."))[0]
                 if tableName in tables.keys():
                     tableName = tables[tableName]
+                parsed.columns[i]=tableName+"."+parsed.columns[i].split(".")[1]
             else:
                 columnName = parsed.columns[i]
                 for key in tables_cols.keys():
                     if columnName in tables_cols[key]:
-                        parsed.columns[i] = key + "." + columnName
-    for i in range(len(parsed.tables)):
+                        if "." in parsed.columns[i]:
+                            print("error:column name is in multiple tables")
+                        else:
+                            parsed.columns[i] = key + "." + columnName
+                    
+    for i in range(len(parsed.tables)): #除去from中表的别名
         parsed.tables[i] = list(parsed.tables[i].split(" "))[0]
-
+    where_str=parsed.wheres[0]
+    pos=[]
+    for ptr in range(len(where_str)):
+        if where_str[ptr] in calculators:
+            pos.append(ptr)
+    temp_str=""
+    print("pos",pos)
+    for i in range(len(pos)):
+        if i==0:
+            temp_str=where_str[0:pos[i]]
+        else:
+            temp_str=where_str[pos[i-1]+1:pos[i]]
+        if temp_str.isdigit():
+            parsed.wheres.append(["number",temp_str])
+        else:
+            if temp_str!="":
+                parsed.wheres.append(["identifier",temp_str])
+        parsed.wheres.append(["calculator",where_str[pos[i]]])
+        if i==len(pos)-1:
+            temp_str=where_str[pos[i]+1:len(where_str)]
+            if temp_str.isdigit():
+                parsed.wheres.append(["number",temp_str])
+            else:
+                parsed.wheres.append(["identifier",temp_str])
+    parsed.wheres.remove(parsed.wheres[0])
+    for i in range(len(parsed.wheres)):
+        if parsed.wheres[i][0]=="identifier":
+            if "." in parsed.wheres[i][1]:
+                if parsed.wheres[i][1].split(".")[0] in tables.keys():
+                    parsed.wheres[i][1]=tables[parsed.wheres[i][1].split(".")[0]]+"."+parsed.wheres[i][1].split(".")[1]
+                else:
+                    print("error:cannot identify table")
+            else:
+                columnName = parsed.wheres[i][1]
+                for key in tables_cols.keys():
+                    if columnName in tables_cols[key]:
+                        if "." in parsed.wheres[i][1]:
+                            print("error:column name is in multiple tables")
+                        else:
+                            parsed.wheres[i][1] = key + "." + columnName
 
 def getResult(
     cmd: str = "select * from Student",
@@ -58,7 +104,7 @@ def getResult(
     parsed_l = parse_sql(cmd)
     print(parsed_l)
     parsed = Parsed()
-    tables = {}
+    tables_other_name = {}
     result_table = Table()
     for i in range(len(parsed_l)):
         if i == 0:
@@ -68,24 +114,38 @@ def getResult(
                 parsed.columns = list(parsed_l[0][1].split(","))
                 if parsed_l[i][0].lower() == "from":
                     parsed.tables = list(parsed_l[i][1].split(","))
-                    tables = extract_tables(parsed_l[i][1])
+                    tables_other_name = extract_tables(parsed_l[i][1])
                 elif parsed_l[i][0].lower() == "where":
                     parsed.wheres = list(parsed_l[i][1].split(","))
-    format_parsed(parsed, tables, {})
+    # format_parsed(parsed, tables_other_name, {})
     tables_cols = {
         table: [field.FieldName for field in FindTable(table).TableField]
         for table in parsed.tables
     }
-    format_parsed(parsed, tables, tables_cols)  # 格式化
-    result_table = Select(
-        Where(
-            From(FindTable(parsed.tables[0])),
-            lambda line: line[parsed.columns[0]] > 0,
-        ),
-        parsed.columns,
-    )
+    format_parsed(parsed, tables_other_name, tables_cols)  # 格式化
+    print(parsed.type,parsed.columns,parsed.tables,parsed.wheres)
+    where_eval_str=""
+    for item in parsed.wheres:
+        if item[0]=="identifier":
+            where_eval_str+="line[\""+item[1]+"\"]"
+        else:
+            where_eval_str+=item[1]
+    print(where_eval_str)
+    if parsed.type=="select":
+        tables=[]
+        for item in parsed.tables:
+            tables.append(FindTable(item))
+        result_table=Select(
+            Where(
+                From(
+                    *tables
+                ),
+                lambda line:eval(where_eval_str)
+            ),
+            parsed.columns
+        )
     return convertTableToJson(result_table)
 
 
 if __name__ == "__main__":
-    print(getResult("select * from Student"))
+    print(getResult("select No from Student,Score where No>=10014"))
