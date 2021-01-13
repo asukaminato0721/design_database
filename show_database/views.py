@@ -2,7 +2,7 @@ import sys
 from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest
 from database_data import all_tables, all_database
-
+from SqlParse import parser
 
 sys.path.append("..")
 from _functions import getResult
@@ -12,10 +12,13 @@ from _functions import getResult
 
 def show(request: HttpRequest, db: str = "") -> HttpResponse:
     # https://www.runoob.com/django/django-form.html
-    query_cmd = request.GET.get(
-        "query_cmd", "select a.No from Student a where a.no = 1"
-    )
-    name, headings, values = getResult(query_cmd)
+    query_cmd = request.GET.get("query_cmd", "select * from Student")
+    # print(query_cmd)
+    # name, headings, values = getResult(query_cmd)
+    values = parser.getResult(query_cmd)
+    headings = parser.getHeadings("Student")
+    print(values)
+    # query_cmd = parser.getResult(query_cmd)
     return render(
         request,
         "index.html",
