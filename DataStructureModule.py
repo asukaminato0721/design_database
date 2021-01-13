@@ -3,10 +3,14 @@ import time
 import pickle
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import Callable, List, Tuple
+import os
+import pathlib
 
 # ======================== Const definition ========================
-FILE_PATH = "database.db"
+FILE_PATH = os.path.join(
+    pathlib.Path(__file__).parent.absolute(), "database.db"
+)
 
 
 # ======================== Const definition end ========================
@@ -235,7 +239,10 @@ def Delete(table: Table, constraints: Callable[[dict], bool]) -> Table:
 
 
 def Update(
-    table: Table, fieldlist: list, valuelist: list, constraints: Callable[[dict], bool]
+    table: Table,
+    fieldlist: list,
+    valuelist: list,
+    constraints: Callable[[dict], bool],
 ) -> Table:
     """
     Update `table` set field1=value1,field2=value2,... where fields fit `constraints`\n
@@ -275,8 +282,8 @@ def PrintTable(table: Table) -> None:
     """
     Print `table`
     """
-    if table == None:
-        return None
+    if not table:
+        return
     print(f"[Table : {table.TableName}]")
     for cols in table.TableField:
         print(f"{cols.FieldName:>14}", end="")
@@ -286,7 +293,6 @@ def PrintTable(table: Table) -> None:
             print(f"{data:>14}", end="")
         print()
     print()
-    return
 
 
 def FindTable(name: str) -> Table:
@@ -299,49 +305,19 @@ def FindTable(name: str) -> Table:
     return None
 
 
+def convertTableToJson(table: Table) -> Tuple[str, List[str], List[tuple]]:
+    """
+    返回 `表名` `列名` `每行的元组构成的列表`
+    """
+    return (
+        table.TableName,
+        [x.FieldName for x in table.TableField],
+        table.TableData,
+    )
+
+
 def _Test():
-    # db = ReadFile(FILE_PATH)
-    # table_1 = Table('Student',
-    #                 [
-    #                     Field('Name', DataType.TEXT, False, True),
-    #                     Field('No', DataType.INTERGER, True, False),
-    #                     Field('Gender', DataType.TEXT, False, True)
-    #                 ],
-    #                 [
-    #                     ('Mike', 10011, 'M'),
-    #                     ('Louise', 10012, 'M'),
-    #                     ('Monika', 10013, 'F'),
-    #                     ('Jason', 10014, 'M'),
-    #                     ('Alice', 10015, 'F'),
-    #                     ('Ulrica', 10016, 'F'),
-    #                     ('Bill', 10017, 'F'),
-    #                     ('Alex', 10018, 'M'),
-    #                     ('Jeb', 10019, 'F'),
-    #                     ('Max', 10020, 'M'),
-    #                 ]
-    #                 )
-    # table_2 = Table('Score',
-    #                 [
-    #                     Field('No', DataType.INTERGER, True, False),
-    #                     Field('Score', DataType.INTERGER, False, True)
-    #                 ],
-    #                 [
-    #                     (10011, 89),
-    #                     (10012, 92),
-    #                     (10013, 99),
-    #                     (10014, 77),
-    #                     (10015, 52),
-    #                     (10016, 55),
-    #                     (10017, 87),
-    #                     (10018, 80),
-    #                     (10019, 91),
-    #                     (10020, 100),
-    #                 ]
-    #                 )
 
-    # db = [table_1, table_2]
-
-    # DML
     """
                         FieldName FieldType FieldIsPK FieldAllowNull
     CREATE TABLE Student(Name,    TEXT,     False,    True,
@@ -349,46 +325,28 @@ def _Test():
                         Gender,   TEXT,     False,    True)
 
     """
-    # Drop('Student')
-    # Drop('Score')
-    table_1 = Create(
-        "Student",
-        [
-            Field("Name", DataType.TEXT, False, True),
-            Field("No", DataType.INTERGER, True, False),
-            Field("Gender", DataType.TEXT, False, True),
-        ],
-        [
-            ("Mike", 10011, "M"),
-            ("Louise", 10012, "M"),
-            ("Monika", 10013, "F"),
-            ("Jason", 10014, "M"),
-            ("Alice", 10015, "F"),
-            ("Ulrica", 10016, "F"),
-            ("Bill", 10017, "F"),
-            ("Alex", 10018, "M"),
-            ("Jeb", 10019, "F"),
-            ("Max", 10020, "M"),
-        ],
-    )
-    table_2 = Create(
-        "Score",
-        [
-            Field("No", DataType.INTERGER, True, False),
-            Field("Score", DataType.INTERGER, False, True),
-        ],
-        [
-            (10011, 89),
-            (10012, 92),
-            (10013, 99),
-            (10014, 77),
-            (10015, 52),
-            (10016, 55),
-            (10017, 87),
-            (10018, 80),
-            (10019, 91),
-            (10020, 100),
-        ],
+    print(
+        convertTableToJson(
+            Table(
+                "Score",
+                [
+                    Field("No", DataType.INTERGER, True, False),
+                    Field("Score", DataType.INTERGER, False, True),
+                ],
+                [
+                    (10011, 89),
+                    (10012, 92),
+                    (10013, 99),
+                    (10014, 77),
+                    (10015, 52),
+                    (10016, 55),
+                    (10017, 87),
+                    (10018, 80),
+                    (10019, 91),
+                    (10020, 100),
+                ],
+            )
+        )
     )
     PrintTable(FindTable("Student"))
     PrintTable(FindTable("Score"))
