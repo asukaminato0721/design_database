@@ -41,10 +41,10 @@ class Table:
     TableName: str = ""
     # cols in the table
     # Eg: [Field1(Name,TEXT),Field2(Gender,TEXT),Field3(Age,INTERGER)]
-    TableField: List[Field] = field(default_factory=List[Field])
+    TableField: List[Field] = field(default_factory=list)
     # Rows in the table
     # Eg: [(Zhangsan,Male,14),(lisi,Male,16),(Wanghong,Female,15)]
-    TableData: List[tuple] = field(default_factory=List[tuple])
+    TableData: List[tuple] = field(default_factory=list)
 
 
 # ======================== Class definition end ========================
