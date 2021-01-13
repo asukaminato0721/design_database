@@ -149,12 +149,16 @@ def Where(table: Table, constraints: Callable[[dict], bool]) -> Table:
     `constraints` should be a lambda expression\n
     Eg :`Where(table_1,lambda line:line['Age'] <= 10 and line.['Gender']=='M')`
     """
+    flag=0
     retTable = Table(TableField=table.TableField, TableName=table.TableName)
     fieldName = [field.FieldName for field in table.TableField]
     for rows in table.TableData:
         line = dict(zip(fieldName, rows))
         if constraints(line):
+            flag=1
             retTable.TableData.append(tuple(line[fname] for fname in fieldName))
+    if flag==0:
+        print("Error:不存在该记录")
     return retTable
 
 
@@ -164,7 +168,7 @@ def Select(table: Table, fieldList: list) -> Table:
     `fieldList` should be a list consists of string or '*'\n
     Eg :`Select(table_1,['Age','Gender'])`
     """
-    if fieldList == "*":
+    if fieldList == ["*"]:
         return table
 
     retTable = Table(TableName=table.TableName)
@@ -358,6 +362,16 @@ def _Test():
         )
     )
 
+    PrintTable(
+        Select(
+            Where(
+                From(FindTable("Student")),
+                lambda line: line["No"] == 6,
+            ),
+            ["No"],
+        )
+    )
+    
     # DELETE FROM table_2 WHERE table_2.Score < 90
     PrintTable(Delete(FindTable("Score"), lambda line: line["Score"] < 90))
 
