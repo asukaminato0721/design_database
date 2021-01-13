@@ -3,10 +3,13 @@
 import os
 import sys
 
+# https://blog.csdn.net/haizhiyunzk/article/details/90210278
+from DataStructureModule import *
+
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'design_database.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "design_database.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -18,5 +21,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
