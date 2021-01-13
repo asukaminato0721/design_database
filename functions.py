@@ -51,7 +51,7 @@ def getResult() -> Table:
     parsed_l = parse_sql()
     print(parsed_l)
     parsed=Parsed()
-    tables={}
+    tables_other_name={}
     result_table=Table()
     for i in range(len(parsed_l)):
         if i==0:
@@ -61,26 +61,30 @@ def getResult() -> Table:
                 parsed.columns=list(parsed_l[0][1].split(","))
                 if parsed_l[i][0].lower()=="from":
                     parsed.tables=list(parsed_l[i][1].split(","))
-                    tables=extract_tables(parsed_l[i][1])
+                    tables_other_name=extract_tables(parsed_l[i][1])
                 elif parsed_l[i][0].lower()=="where":
                     parsed.wheres=list(parsed_l[i][1].split(","))
-    format_parsed(parsed,tables,{})
+    format_parsed(parsed,tables_other_name,{})
     tables_cols={}
     for table in parsed.tables:
         cols=[]
         for field in FindTable(table).TableField:
             cols.append(field.FieldName)
         tables_cols[table]=cols
-    format_parsed(parsed,tables,tables_cols) #格式化
-    result_table=Select(
-        Where(
-            From(
-                FindTable(parsed.tables[0])
+    format_parsed(parsed,tables_other_name,tables_cols) #格式化
+    if parsed.type=="select":
+        tables=[]
+        for item in parsed.tables:
+            tables.append(FindTable(item))
+        result_table=Select(
+            Where(
+                From(
+                    *tables
+                ),
+                lambda line:eval("line[\"No\"]>10012")
             ),
-            lambda line:line[parsed.columns[0]]>0
-        ),
-        parsed.columns
-    )
+            parsed.columns
+        )
     return result_table
 
 PrintTable(getResult())

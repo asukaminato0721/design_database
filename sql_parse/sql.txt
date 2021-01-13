@@ -1,2 +1,1 @@
-select a.No from Student a where a.no = 1
-$
+select a.Name from Student a where No = 1 
