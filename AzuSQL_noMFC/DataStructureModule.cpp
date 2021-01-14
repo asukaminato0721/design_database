@@ -12,6 +12,577 @@ using namespace std;
 
 
 
+
+using namespace std;
+static int f = 0;
+//初始界面显示；
+void Start() {
+	if (f == 0) {
+		cout << " *------------------------------------------------*" << endl;
+		cout << " |                                                | " << endl;
+		cout << " |                  DBMS主界面                    | " << endl;
+		cout << " |                                                | " << endl;
+		cout << " *------------------------------------------------*" << endl;
+		cout << "[用户登录请按1,用户注册请按2,退出系统请按"
+			<< "'exit']" << endl;
+	}
+	else
+		;
+}
+
+class USER {
+	//用户数据结构
+public:
+	string name;
+	string password;
+	string right_super;
+	string right_ordinary;
+
+	string right_select;
+	string right_insert;
+	string right_delete;
+	string right_update;
+
+	//定义用户姓名密码读写权限
+	USER(string name, string password, string right_super,
+		string right_ordinary) {
+		this->name = name;
+		this->password = password;
+		this->right_super = right_super;
+		this->right_ordinary = right_ordinary;
+	}
+
+	USER() {
+		this->name = "\0";
+		this->password = "\0";
+		this->right_super = "false";
+		this->right_ordinary = "false";
+	}
+};
+class TOKEN
+{
+	//索引的数据结构
+public:
+	vector<string> codes;
+	string taken_name;
+
+	TOKEN() { }
+};
+vector<TOKEN> token;
+
+
+//将读取到的字符串（文件中的一行）解析成User的各属性
+USER StringToUser(string s) {
+	USER temp;
+	string t = "";
+	int i = 0;
+	int len = s.length();
+
+	while (s[i] == ' ')
+		++i;
+	for (i; i < len; ++i) {
+		if (s[i] == ' ')
+			break;
+		else
+			t = t + s[i];
+	}
+	temp.name = t;
+	t = "";
+	while (s[i] == ' ')
+		++i;
+	for (i; i < len; ++i) {
+		if (s[i] == ' ')
+			break;
+		else
+			t = t + s[i];
+	}
+
+	temp.password = t;
+	t = "";
+
+	while (s[i] == ' ')
+		++i;
+	for (i; i < len; ++i) {
+		if (s[i] == ' ')
+			break;
+		else
+			t = t + s[i];
+	}
+
+	temp.right_super = t;
+
+	t = "";
+
+	while (s[i] == ' ')
+		++i;
+	for (i; i < len; ++i) {
+		if (s[i] == ' ')
+			break;
+		else
+			t = t + s[i];
+	}
+
+	temp.right_ordinary = t;
+
+	return temp;
+}
+
+// 读取文件并比较，相同则返回该用户，否则返回空用户
+USER UserCompare(string name, string password) {
+	USER temp;
+	ifstream fin;
+	fin.open("user.dat"); //打开文件
+	bool find = false;
+	string s;
+	while (!fin.eof()) {
+		getline(fin, s);
+		temp = StringToUser(s);
+		if (temp.name == name && temp.password == password) {
+			fin.close();
+			return temp;
+		}
+	}
+	fin.close();
+	USER t;
+	return t;
+}
+
+//创建用户
+void CreateUser() {
+	USER u;
+	string name, password;
+	printf("请输入注册用户名:");
+	cin >> name;
+	printf("\n");
+	printf("请输入注册密码:");
+	cin >> password;
+	printf("\n");
+	cout << "-----------------------" << endl;
+	string privileges;
+	cout << "请输入用户的类型：（超级用户:s  普通用户:o  不区分大小写）"
+		<< endl;
+	cin >> privileges;
+	printf("\n");
+	u.name = name;
+	u.password = password;
+	//赋予读写权限
+	for (int i = 0; i < privileges.length(); ++i) {
+		if (privileges[i] == 's' || privileges[i] == 'S')
+			u.right_super = "true";
+		else if (privileges[i] == 'o' || privileges[i] == 'O')
+			u.right_ordinary = "true";
+	}
+
+	//文件输入输出流，不存在则自动创建
+	ofstream fout;
+	fout.open("user.dat", ios::app);
+	fout << u.name << " " << u.password << " " << u.right_super << " "
+		<< u.right_ordinary << "\n"
+		<< endl;
+	fout.close();
+}
+
+void CreatGrant(string s) {
+	string name;
+	name = "grant ";
+	int i = name.length();
+	name = "";
+	for (; i < s.length() && s[i] != ' '; ++i)
+		name += s[i];
+	TOKEN tok;
+	tok.taken_name = name;
+
+	string t;
+	while (getline(cin, t) && t != "")
+		tok.codes.push_back(t);
+	// idx.codes.push_back(";");
+	token.push_back(tok);
+	cout << "对权限" << tok.taken_name << "的授权信息如下：" << endl;
+	ofstream fout;
+	fout.open("token.txt", ios::app);
+	fout << tok.taken_name << "[";
+	for (int r = 3; r < tok.codes[0].length(); r++)
+		fout << tok.codes[0][r];
+	fout << "] To ";
+	for (int rr = 3; rr < tok.codes[1].length(); rr++)
+		fout << tok.codes[1][rr];
+	fout << endl;
+
+	cout << "权限名称   ：\t" << tok.taken_name << endl;
+	cout << "所授予权限针对对象\t：";
+	// for(int i = 1; i < v.codes.size()-2; ++i)
+	for (int r = 3; r < tok.codes[0].length(); r++)
+		cout << tok.codes[0][r];
+	cout << endl;
+	cout << "所授予给的用户\t ：";
+
+	for (int rr = 3; rr < tok.codes[1].length(); rr++)
+		cout << tok.codes[1][rr];
+	cout << endl;
+	fout.close();
+
+	cout << "授权成功！" << endl;
+}
+
+void CreatRevoke(string s) {
+	string name;
+	name = "revoke ";
+	int i = name.length();
+	name = "";
+	for (; i < s.length() && s[i] != ' '; ++i)
+		name += s[i];
+	TOKEN tok;
+	tok.taken_name = name;
+
+	string t;
+	while (getline(cin, t) && t != "")
+		tok.codes.push_back(t);
+	// idx.codes.push_back(";");
+	token.push_back(tok);
+	cout << "对权限" << tok.taken_name << "的回收信息如下：" << endl;
+	ofstream fout;
+	fout.open("token.txt", ios::app);
+	fout << tok.taken_name << "[";
+	for (int r = 3; r < tok.codes[0].length(); r++)
+		fout << tok.codes[0][r];
+	fout << "] From ";
+	for (int rr = 5; rr < tok.codes[1].length(); rr++)
+		fout << tok.codes[1][rr];
+	fout << endl;
+
+	cout << "权限名称              \t ：" << tok.taken_name << endl;
+	cout << "所授予权限针对对象 \t：";
+	// for(int i = 1; i < v.codes.size()-2; ++i)
+	for (int r = 3; r < tok.codes[0].length(); r++)
+		cout << tok.codes[0][r];
+	cout << endl;
+	cout << "来源用户及回收操作类型\t ：";
+
+	for (int rr = 5; rr < tok.codes[1].length(); rr++)
+		cout << tok.codes[1][rr];
+	cout << endl;
+
+	fout.close();
+
+	cout << "回收成功！" << endl;
+}
+
+USER uu;
+/*void Help_op(string op, int& flag) //对应为help语句
+{
+
+	if (op == "help database") {
+
+		int have = 0;
+		flag = 1;
+		cout << "数据库中数据表对象及其属性、属性类型如下：" << endl;
+		for (int i = 0; i < table.size(); ++i) {
+			have = 1;
+			cout << table[i].table_name << "：" << endl;
+			for (int j = 0; j < table[i].col_name.size(); ++j)
+				cout << "属性"
+				<< ":\t" << table[i].col_name[j] << " \t"
+				<< table[i].type_value[j] << "\t" << endl;
+
+			cout << endl;
+		}
+		cout << "数据库中视图对象及其属性、属性类型如下：" << endl;
+		for (int i = 0; i < view.size(); ++i) {
+			have = 1;
+			cout << view[i].view_name << ":" << endl;
+
+			cout << "属性\t：";
+			// for(int i = 1; i < v.codes.size()-2; ++i)
+			for (int r = 5; r < view[i].codes[1].length(); r++)
+				cout << view[i].codes[1][r];
+			cout << endl;
+			cout << "条件\t：";
+
+			for (int rr = 6; rr < view[i].codes[2].length(); rr++)
+				cout << view[i].codes[2][rr];
+			cout << endl;
+		}
+
+		cout << "数据库中索引对象及其索引属性信息如下：" << endl;
+		for (int i = 0; i < index.size(); ++i) {
+			have = 1;
+			cout << index[i].index_name << ":" << endl;
+
+			cout << "索引属性所在表\t：";
+
+			for (int r = 9; r < index[i].codes[0].length(); r++)
+				cout << index[i].codes[0][r];
+			cout << endl;
+			cout << "索引属性\t：";
+
+			for (int rr = 0; rr < index[i].codes[1].length(); rr++)
+				cout << index[i].codes[1][rr];
+			cout << endl;
+			cout << "索引类型\t：";
+
+			for (int rrr = 0; rrr < index[i].codes[2].length(); rrr++)
+				cout << index[i].codes[2][rrr];
+			cout << endl;
+			// for(int j = 0; j < view[i].codes.size(); ++j)
+			//     cout <<view[i].codes[j] << endl;
+			//  cout << endl;
+		}
+
+		if (have == 0)
+			cout << "暂无数据" << endl;
+
+		return;
+	}
+
+	string s = "help table ";
+	int f = 1;
+	for (int i = 0; i < s.length(); ++i) {
+		if (op[i] != s[i]) {
+			f = 0;
+			break;
+		}
+	}
+	if (f == 1) {
+		flag = 1;
+		string name;
+		for (int j = s.length(); j < op.length(); ++j)
+			name += op[j];
+		int ff = 0;
+		for (int k = 0; k < table.size(); ++k) {
+			if (table[k].table_name == name) {
+				cout << "数据表:" << table[k].table_name << "：" << endl;
+				ifstream fin;
+				string tt = table[k].table_name + ".dat";
+				char file[30];
+				for (int i = 0; i < tt.length(); ++i)
+					file[i] = tt[i];
+				file[tt.length()] = '\0';
+				fin.open(file);
+				string t;
+				cout << "包含属性如下：" << endl;
+				while (getline(fin, t))
+					cout << t << endl;
+				cout << endl;
+				ff = 1;
+				return;
+			}
+		}
+		if (!ff)
+			cout << "数据库中还没有该数据表" << endl;
+		return;
+	}
+
+	s = "help view ";
+	f = 1;
+	for (int i = 0; i < s.length(); ++i) {
+		if (op[i] != s[i]) {
+			f = 0;
+			break;
+		}
+	}
+	if (f == 1) {
+		flag = 1;
+		string name;
+		for (int j = s.length(); j < op.length(); ++j)
+			name += op[j];
+		int ff = 0;
+		for (int k = 0; k < view.size(); ++k) {
+			if (view[k].view_name == name) {
+				cout << "帮助信息如下：" << endl;
+				cout << "视图名称：" << view[k].view_name << ":" << endl;
+
+				ifstream fin;                           //
+				string tt = view[k].view_name + ".dat"; //
+				char file[30];                          //
+				for (int i = 0; i < tt.length(); i++)   //
+					file[i] = tt[i];                    //
+				file[tt.length()] = '\0';               //
+				fin.open(file);                         //
+				string t;                               //
+				while (getline(fin, t))                 //
+					cout << t << endl;                  //
+				//
+				ff = 1; //
+
+				cout << "属性\t：";
+				// for(int i = 1; i < v.codes.size()-2; ++i)
+				for (int r = 5; r < view[k].codes[1].length(); r++)
+					cout << view[k].codes[1][r];
+				cout << endl;
+				cout << "条件\t：";
+
+				for (int rr = 6; rr < view[k].codes[2].length(); rr++)
+					cout << view[k].codes[2][rr];
+				cout << endl;
+
+				return;
+			}
+		}
+		if (!ff)
+			cout << "没有该视图" << endl;
+
+		return;
+	}
+
+	s = "help index ";
+	f = 1;
+	for (int i = 0; i < s.length(); ++i) {
+		if (op[i] != s[i]) {
+			f = 0;
+			break;
+		}
+	}
+	if (f == 1) {
+		flag = 1;
+		string name;
+		for (int j = s.length(); j < op.length(); ++j)
+			name += op[j];
+		int ff = 0;
+		for (int k = 0; k < index.size(); ++k) {
+			if (index[k].index_name == name) {
+				cout << "帮助信息如下：" << endl;
+				cout << "索引名称：" << index[k].index_name << ":" << endl;
+
+				ifstream fin;                             //
+				string tt = index[k].index_name + ".dat"; //
+				char file[30];                            //
+				for (int i = 0; i < tt.length(); i++)     //
+					file[i] = tt[i];                      //
+				file[tt.length()] = '\0';                 //
+				fin.open(file);                           //
+				string t;                                 //
+				while (getline(fin, t))                   //
+					cout << t << endl;                    //
+				//
+				ff = 1; //
+
+				cout << "索引属性所在表\t：";
+
+				for (int r = 9; r < index[k].codes[0].length(); r++)
+					cout << index[k].codes[0][r];
+				cout << endl;
+				cout << "索引属性\t：";
+
+				for (int rr = 0; rr < index[k].codes[1].length(); rr++)
+					cout << index[k].codes[1][rr];
+				cout << endl;
+
+				cout << "索引类型\t：";
+
+				for (int rrr = 0; rrr < index[k].codes[2].length(); rrr++)
+					cout << index[k].codes[2][rrr];
+				cout << endl;
+
+				return;
+			}
+		}
+		if (!ff)
+			cout << "没有该视图" << endl;
+
+		return;
+	}
+}
+
+*/
+void CreateGrant_op(string op, int& flag) //建立授权
+{
+	string s = "grant ";
+	int f = 1;
+	for (int i = 0; i < s.length(); ++i) {
+		if (op[i] != s[i]) {
+			f = 0;
+			break;
+		}
+	}
+	if (f) {
+		flag = 8;
+		CreatGrant(op);
+	}
+
+	return;
+}
+
+void CreateRevoke_op(string op, int& flag) //建立撤销授权
+{
+	string s = "revoke ";
+	int f = 1;
+	for (int i = 0; i < s.length(); ++i) {
+		if (op[i] != s[i]) {
+			f = 0;
+			break;
+		}
+	}
+	if (f) {
+		flag = 8;
+		CreatRevoke(op);
+	}
+
+	return;
+}
+
+int Login() {
+
+	string name;
+	string password;
+	USER user; //用户
+
+	string ch;
+	// loop:
+	while (true) //循环体
+	{
+		cin >> ch;
+		if (ch == "1")
+			break; // ch为1时，直接退出
+		else if (ch == "2") {
+			CreateUser();
+			cout << "创建新用户成功" << endl;
+			break;
+		}
+		else {
+			cout << "您的输入有误，请重新输入……" << endl;
+			f = 1;
+			Start();
+		}
+	}
+	while (true) {
+		printf("登录名:");
+		cin >> name;
+
+		printf("登录密码:");
+		cin >> password;
+
+		cout << "---------------------------------------------------" << endl;
+		USER u = UserCompare(name, password); //输入用户与已注册用户比较
+		// uu=u;
+
+		if (u.name != name) {
+			cout << "用户名或密码错误请重新输入" << endl;
+			continue;
+		}
+		printf("\n");
+
+		cout << "Welcome User [" << u.name << "] Login MY DBMS" << endl;
+		printf("\n");
+		int k = -1;
+
+		if (u.right_super == "true")
+			cout << "您为本系统的超级用户" << endl;
+		else if (u.right_ordinary == "true")
+			cout << "您为本系统的普通用户" << endl;
+
+		break;
+	}
+
+	cout << "---------------------------------------------------" << endl;
+	cout << "用户登录成功,请输入SQL语句:" << endl;
+	return 0;
+}
+
+
+
+
+
+
 string strip(const string& str) {
 	if (str == "") {
 		return "";
@@ -1149,13 +1720,8 @@ string SQL(DB& db, string sql) {
 int main() {
 	DB database = DB();
 
-	LoadDatabase("TestDataBase.hex", database);
-	SQL(database, "CREATE TABLE test1 (a int PRIMARY KEY,b char(1020));");
-	for (int i = 0; i < 100; ++i) {
-		SQL(database, "INSERT INTO test1 VALUES (" + to_string(i) + ",'test');");
-	}
-
-
+	Start(); //初始界面
+	Login(); //用户注册or登录
 	while (true)
 	{
 		string input;
