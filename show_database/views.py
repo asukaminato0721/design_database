@@ -12,13 +12,16 @@ from _functions import getResult
 
 def show(request: HttpRequest, db: str = "") -> HttpResponse:
     # https://www.runoob.com/django/django-form.html
-    query_cmd = request.GET.get("query_cmd", "select * from Student")
-    # print(query_cmd)
-    # name, headings, values = getResult(query_cmd)
-    values = parser.getResult(query_cmd)
-    headings = parser.getHeadings("Student")
+    query_cmd = request.GET.get(
+        "query_cmd", "select No from Student where No>2"
+    )
+    try:
+        name, headings, values = getResult(query_cmd)
+    except:
+        name = "error"
+        values = parser.getResult(query_cmd)
+        headings = parser.getHeadings("Student")
     print(values)
-    # query_cmd = parser.getResult(query_cmd)
     return render(
         request,
         "index.html",
