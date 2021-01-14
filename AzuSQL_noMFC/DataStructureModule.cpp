@@ -1714,6 +1714,20 @@ string SQL(DB& db, string sql) {
 		StoreDatabase(filePath, db);
 		return "Store to " + filePath + "\n";
 	}
+	else if (upperSql.compare(0, 4, "GRANT", 0, 4) == 0) {
+		auto tokens = split(sql.substr(0, sql.length() - 1), " ");
+		string op = tokens[1];
+		string tableName = tokens[4];
+		string userName = tokens[6];
+
+	}
+	else if (upperSql.compare(0, 5, "REVOKE", 0, 5) == 0) {
+		auto tokens = split(sql.substr(0, sql.length() - 1), " ");
+		string op = tokens[1];
+		string tableName = tokens[4];
+		string userName = tokens[6];
+
+	}
 	return "Unknown SQL.";
 }
 
