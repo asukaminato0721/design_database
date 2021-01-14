@@ -1,4 +1,5 @@
 ﻿// pch.cpp: 与预编译标头对应的源文件
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "pch.h"
 

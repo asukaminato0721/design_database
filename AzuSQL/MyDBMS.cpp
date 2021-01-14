@@ -1,27 +1,27 @@
 ﻿
-// AzuSQL.cpp: 定义应用程序的类行为。
+// MyDBMS.cpp: 定义应用程序的类行为。
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "AzuSQL.h"
-#include "AzuSQLDlg.h"
+#include "MyDBMS.h"
+#include "MyDBMSDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CAzuSQLApp
+// CMyDBMSApp
 
-BEGIN_MESSAGE_MAP(CAzuSQLApp, CWinApp)
+BEGIN_MESSAGE_MAP(CMyDBMSApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CAzuSQLApp 构造
+// CMyDBMSApp 构造
 
-CAzuSQLApp::CAzuSQLApp()
+CMyDBMSApp::CMyDBMSApp()
 {
 	// 支持重新启动管理器
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
@@ -31,14 +31,14 @@ CAzuSQLApp::CAzuSQLApp()
 }
 
 
-// 唯一的 CAzuSQLApp 对象
+// 唯一的 CMyDBMSApp 对象
 
-CAzuSQLApp theApp;
+CMyDBMSApp theApp;
 
 
-// CAzuSQLApp 初始化
+// CMyDBMSApp 初始化
 
-BOOL CAzuSQLApp::InitInstance()
+BOOL CMyDBMSApp::InitInstance()
 {
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
@@ -71,7 +71,7 @@ BOOL CAzuSQLApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CAzuSQLDlg dlg;
+	CMyDBMSDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

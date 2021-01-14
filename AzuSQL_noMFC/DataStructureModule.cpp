@@ -329,10 +329,6 @@ int Login() {
 }
 
 
-
-
-
-
 string strip(const string& str) {
 	if (str == "") {
 		return "";

@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AzuSQL.h">
+    <ClInclude Include="MyDBMS.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="AzuSQLDlg.h">
+    <ClInclude Include="MyDBMSDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="framework.h">
@@ -38,10 +38,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AzuSQL.cpp">
+    <ClCompile Include="MyDBMS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="AzuSQLDlg.cpp">
+    <ClCompile Include="MyDBMSDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -52,17 +52,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="AzuSQL.rc">
+    <ResourceCompile Include="MyDBMS.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\AzuSQL.rc2">
+    <None Include="res\MyDBMS.rc2">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\AzuSQL.ico">
+    <Image Include="res\MyDBMS.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

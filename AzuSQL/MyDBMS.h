@@ -1,5 +1,5 @@
 ﻿
-// AzuSQL.h: PROJECT_NAME 应用程序的主头文件
+// MyDBMS.h: PROJECT_NAME 应用程序的主头文件
 //
 
 #pragma once
@@ -11,14 +11,14 @@
 #include "resource.h"		// 主符号
 
 
-// CAzuSQLApp:
-// 有关此类的实现，请参阅 AzuSQL.cpp
+// CMyDBMSApp:
+// 有关此类的实现，请参阅 MyDBMS.cpp
 //
 
-class CAzuSQLApp : public CWinApp
+class CMyDBMSApp : public CWinApp
 {
 public:
-	CAzuSQLApp();
+	CMyDBMSApp();
 
 // 重写
 public:
@@ -29,4 +29,4 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
-extern CAzuSQLApp theApp;
+extern CMyDBMSApp theApp;
