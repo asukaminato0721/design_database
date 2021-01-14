@@ -84,9 +84,14 @@ def format_parsed(parsed: Parsed, tables: dict = {}, tables_cols: dict = {}):
     parsed.wheres.remove(parsed.wheres[0])
     for i in range(len(parsed.wheres)):
         if parsed.wheres[i][0]=="identifier":
+            if len(parsed.tables)==1:
+                parsed.wheres[i][1]=parsed.wheres[i][1].split(".")[-1]
+                continue
             if "." in parsed.wheres[i][1]:
-                if parsed.wheres[i][1].split(".")[0] in tables.keys():
+                if parsed.wheres[i][1].split(".")[0] in tables.keys(): #前缀表名为别名
                     parsed.wheres[i][1]=tables[parsed.wheres[i][1].split(".")[0]]+"."+parsed.wheres[i][1].split(".")[1]
+                elif parsed.wheres[i][1].split(".")[0] in tables_cols.keys():#前缀表名为本名
+                    pass
                 else:
                     print("error:cannot identify table")
             else:
@@ -97,7 +102,6 @@ def format_parsed(parsed: Parsed, tables: dict = {}, tables_cols: dict = {}):
                             print("error:column name is in multiple tables")
                         else:
                             parsed.wheres[i][1] = key + "." + columnName
-
 def getResult(
     cmd: str = "select * from Student",
 ) -> Tuple[str, List[str], List[tuple]]:
@@ -110,8 +114,14 @@ def getResult(
         if i == 0:
             parsed.type = parsed_l[0][0].lower()  # 获取sql语句的类型
         else:
-            if parsed.type == "select":
+            if parsed.type =="select":
                 parsed.columns = list(parsed_l[0][1].split(","))
+                if parsed_l[i][0].lower() == "from":
+                    parsed.tables = list(parsed_l[i][1].split(","))
+                    tables_other_name = extract_tables(parsed_l[i][1])
+                elif parsed_l[i][0].lower() == "where":
+                    parsed.wheres = list(parsed_l[i][1].split(","))
+            elif parsed.type =="delete":
                 if parsed_l[i][0].lower() == "from":
                     parsed.tables = list(parsed_l[i][1].split(","))
                     tables_other_name = extract_tables(parsed_l[i][1])
@@ -131,7 +141,7 @@ def getResult(
         else:
             where_eval_str+=item[1]
     print(where_eval_str)
-    if parsed.type=="select":
+    if parsed.type=="select":#select 语句
         tables=[]
         for item in parsed.tables:
             tables.append(FindTable(item))
@@ -144,6 +154,16 @@ def getResult(
             ),
             parsed.columns
         )
+    if parsed.type=="delete":# delete 语句
+        tables=[]
+        for item in parsed.tables:
+            tables.append(FindTable(item))
+        result_table=Delete(
+                From(
+                    *tables
+                ),
+                lambda line:eval(where_eval_str)
+        )
     return convertTableToJson(result_table)
 
 #解析sql语句
@@ -154,4 +174,4 @@ def sql(sql):
     return
 
 if __name__ == "__main__":
-    print(getResult("select No from Student,Score where No>=10014"))
+    print(getResult("select No from Student where No>10011"))
