@@ -10,7 +10,7 @@ class CAzuSQLDlg : public CDialogEx
 {
 // 构造
 public:
-	CAzuSQLDlg(CWnd* pParent = nullptr);	// 标准构造函数
+	CAzuSQLDlg( CWnd* pParent = nullptr);	// 标准构造函数
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME

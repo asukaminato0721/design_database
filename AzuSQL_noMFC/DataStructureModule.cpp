@@ -10,17 +10,6 @@ using namespace std;
 //TODO delete 中不允许完整属性名
 
 
-// https://stackoverflow.com/questions/4266914/how-does-a-const-struct-differ-from-a-struct
-// 根据这个链接，const 可以删
-struct Datatype
-{
-	uint8_t id;
-	uint32_t size;
-};
-const Datatype FieldType_INT = { 1, 4 };
-const Datatype FieldType_FLOAT = { 3, 8 };
-const Datatype FieldType_CHAR = { 10, 1 };
-const Datatype FieldType_BYTE = { 11, 1 };
 
 
 string strip(const string& str) {
@@ -68,364 +57,230 @@ void LogInfo(string msg, uint8_t level) {
 
 
 
-//属性名+类型号+长度+标签
-#define FIELD_SIZE (MAX_FIELD_NAME_LEN+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
-class Field
-{
-public:
-	Field(string fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
-		this->FieldName = fieldName;
-		this->FieldType = fieldType;
-		if (fieldType.id == FieldType_CHAR.id || fieldType.id == FieldType_BYTE.id) {
-			this->FieldSize = length;
-		}
-		else {
-			this->FieldSize = fieldType.size;
-		}
-		if ((FieldProperty & FIELD_PROPERTY_PK) != 0) {
-			FieldProperty = FieldProperty | FIELD_PROPERTY_NOT_NULL;
-		}
-		this->FieldProperty = FieldProperty;
+Field::Field(string fieldName, Datatype fieldType, uint32_t length, uint32_t FieldProperty = 0) {
+	this->FieldName = fieldName;
+	this->FieldType = fieldType;
+	if (fieldType.id == FieldType_CHAR.id || fieldType.id == FieldType_BYTE.id) {
+		this->FieldSize = length;
 	}
-	Field(Field* f) {
-		this->FieldName = f->FieldName;
-		this->FieldProperty = f->FieldProperty;
-		this->FieldSize = f->FieldSize;
-		this->FieldType = f->FieldType;
+	else {
+		this->FieldSize = fieldType.size;
 	}
-	string FieldName;
-	Datatype FieldType = FieldType_INT;
-	uint32_t FieldProperty = 0;
-	uint32_t FieldSize = 1;
-	uint32_t Offset = 0;
-};
+	if ((FieldProperty & FIELD_PROPERTY_PK) != 0) {
+		FieldProperty = FieldProperty | FIELD_PROPERTY_NOT_NULL;
+	}
+	this->FieldProperty = FieldProperty;
+}
+Field::Field(Field* f) {
+	this->FieldName = f->FieldName;
+	this->FieldProperty = f->FieldProperty;
+	this->FieldSize = f->FieldSize;
+	this->FieldType = f->FieldType;
+}
 
-//表名+属性数量+数据数量+数据长度
-#define TABLE_HEAD_SIZE (MAX_TABLE_NAME_LEN+sizeof(uint32_t)+sizeof(uint64_t)+sizeof(uint32_t))
-
-class Table
-{
-
-public:
-
-	string TableName;
-	Field* TableField[MAX_FIELD_NUMBER];
-	map<string, Field*> FieldMap = map<string, Field*>();
-	uint32_t TableFieldNum = 0;
-	uint32_t TableRowSize = 0;
-	vector<uint8_t*> Data = vector<uint8_t*>();
-
-	Table() {
-		memset(this->TableField, 0, MAX_FIELD_NUMBER);
+Table::Table() {
+	memset(this->TableField, 0, MAX_FIELD_NUMBER);
+	return;
+}
+Table::Table(string tableName) {
+	this->TableName = tableName;
+	memset(this->TableField, 0, MAX_FIELD_NUMBER);
+}
+Table::~Table() {
+	for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
+		delete this->TableField[i];
+	}
+	for (auto iter1 = this->Data.begin(); iter1 != this->Data.end(); iter1++) {
+		free(*iter1);
+	}
+	this->Data.clear();
+}
+void Table::AddField(Field* f) {
+	if (TableFieldNum == MAX_FIELD_NUMBER) {
+		LogInfo("Field number exceed", 12);
 		return;
 	}
-	Table(string tableName) {
-		this->TableName = tableName;
-		memset(this->TableField, 0, MAX_FIELD_NUMBER);
-	}
-	~Table() {
-		for (uint32_t i = 0; i < this->TableFieldNum; ++i) {
-			delete this->TableField[i];
-		}
-		for (auto iter1 = this->Data.begin(); iter1 != this->Data.end(); iter1++) {
-			free(*iter1);
-		}
-		this->Data.clear();
-	}
-
-	void AddField(Field* f) {
-		if (TableFieldNum == MAX_FIELD_NUMBER) {
-			LogInfo("Field number exceed", 12);
-			return;
+	else {
+		this->TableField[TableFieldNum] = f;
+		if (TableFieldNum != 0) {
+			f->Offset = this->TableField[TableFieldNum - 1]->Offset + TableField[TableFieldNum - 1]->FieldSize;
 		}
 		else {
-			this->TableField[TableFieldNum] = f;
-			if (TableFieldNum != 0) {
-				f->Offset = this->TableField[TableFieldNum - 1]->Offset + TableField[TableFieldNum - 1]->FieldSize;
-			}
-			else {
-				f->Offset = 0;
-			}
-			this->TableRowSize += f->FieldSize;
-			TableFieldNum++;
-			FieldMap[f->FieldName] = f;
-			return;
+			f->Offset = 0;
 		}
+		this->TableRowSize += f->FieldSize;
+		TableFieldNum++;
+		FieldMap[f->FieldName] = f;
+		return;
+	}
+}
+Table* Table::InsertData(uint8_t* data) {
+	uint8_t* pDataRow = (uint8_t*)calloc(this->TableRowSize, sizeof(uint8_t));
+	if (pDataRow == NULL) {
+		LogInfo("Unable to allocate memory", 12);
+		return nullptr;
+	}
+	memcpy(pDataRow, data, this->TableRowSize);
+	this->Data.push_back(pDataRow);
+	return this;
+}
+Table* Table::DeleteData(uint64_t rowIndex) {
+	auto p = begin(this->Data) + rowIndex;
+	free(*p);
+	this->Data.erase(p);
+	return this;
+}
+Table* Table::UpdateData(uint8_t* pData, uint32_t offset, uint32_t length, uint64_t rowIndex) {
+	memcpy(this->Data[rowIndex] + offset, pData, length);
+	return this;
+}
+vector<uint64_t>* Table::WhereFilter(const string& whereStr) {
+
+	//Score.Mark >= 60 and Score.Mark < 90
+	if (whereStr == "") {
+		auto pRet = new vector<uint64_t>();
+		for (uint64_t i = 0; i < this->Data.size(); ++i) {
+			pRet->push_back(i);
+		}
+		return pRet;
 	}
 
-	/// <summary>
-	/// 将数据插入表中（深拷贝）
-	/// </summary>
-	/// <param name="DataTuple">指向数据头的指针</param>
-	/// <returns>返回该表</returns>
-	Table* InsertData(uint8_t* data) {
-		uint8_t* pDataRow = (uint8_t*)calloc(this->TableRowSize, sizeof(uint8_t));
-		if (pDataRow == NULL) {
-			LogInfo("Unable to allocate memory", 12);
-			return nullptr;
-		}
-		memcpy(pDataRow, data, this->TableRowSize);
-		this->Data.push_back(pDataRow);
-		return this;
-	}
-	/// <summary>
-	/// 删除表中的数据
-	/// </summary>
-	/// <param name="rowIndex">待删除的行号</param>
-	/// <returns>返回该表</returns>
-	Table* DeleteData(uint64_t rowIndex) {
-		auto p = begin(this->Data) + rowIndex;
-		free(*p);
-		this->Data.erase(p);
-		return this;
-	}
+	//TODO 默认在关键字之间会添加空格，计划自动添加空格
+	string UpperWhere = whereStr;
+	transform(UpperWhere.begin(), UpperWhere.end(), UpperWhere.begin(), ::toupper);
 
-	Table* UpdateData(uint8_t* pData, uint32_t offset, uint32_t length, uint64_t rowIndex) {
-		memcpy(this->Data[rowIndex] + offset, pData, length);
-		return this;
-	}
+	auto token = split(whereStr, " ");
+	auto UpperToken = split(UpperWhere, " ");
+	vector<uint8_t> tokenType = vector<uint8_t>(token.size());
 
-	vector<uint64_t>* WhereFilter(const string& whereStr) {
-
-		//Score.Mark >= 60 and Score.Mark < 90
-		if (whereStr == "") {
-			auto pRet = new vector<uint64_t>();
-			for (uint64_t i = 0; i < this->Data.size(); ++i) {
-				pRet->push_back(i);
+	vector<string> postFix;
+	stack<string>buff;
+	//make postfix
+	for (uint32_t i = 0; i < token.size(); ++i) {
+		if (UpperToken[i] == "<" || UpperToken[i] == "<=" ||
+			UpperToken[i] == "=" || UpperToken[i] == ">=" ||
+			UpperToken[i] == ">" || UpperToken[i] == "!=" ||
+			UpperToken[i] == "AND" || UpperToken[i] == "OR") {
+			if (buff.size() == 0) {
+				buff.push(token[i]);
 			}
-			return pRet;
-		}
-
-		//TODO 默认在关键字之间会添加空格，计划自动添加空格
-		string UpperWhere = whereStr;
-		transform(UpperWhere.begin(), UpperWhere.end(), UpperWhere.begin(), ::toupper);
-
-		auto token = split(whereStr, " ");
-		auto UpperToken = split(UpperWhere, " ");
-		vector<uint8_t> tokenType = vector<uint8_t>(token.size());
-
-		vector<string> postFix;
-		stack<string>buff;
-		//make postfix
-		for (uint32_t i = 0; i < token.size(); ++i) {
-			if (UpperToken[i] == "<" || UpperToken[i] == "<=" ||
-				UpperToken[i] == "=" || UpperToken[i] == ">=" ||
-				UpperToken[i] == ">" || UpperToken[i] == "!=" ||
-				UpperToken[i] == "AND" || UpperToken[i] == "OR") {
-				if (buff.size() == 0) {
-					buff.push(token[i]);
-				}
-				else
-				{
-					while ((
-						(UpperToken[i] == "AND" || UpperToken[i] == "OR")
-						&& buff.size() != 0
-						&& (buff.top() != "AND" && buff.top() != "OR"))
-						)
-					{
-						postFix.push_back(buff.top());
-						buff.pop();
-					}
-					buff.push(UpperToken[i]);
-				}
-			}
-			else {
-				postFix.push_back(token[i]);
-			}
-		}
-		while (buff.size() != 0)
-		{
-			postFix.push_back(buff.top());
-			buff.pop();
-		}
-		//cal
-
-		vector<uint64_t>* result = new vector<uint64_t>;
-		if (result == NULL) {
-			LogInfo("Unable to allocate memory", 12);
-			return nullptr;
-		}
-		stack<string> res;
-		for (uint64_t index = 0; index < this->Data.size(); index++)
-		{
-			uint8_t* data = this->Data[index];
-			for (uint32_t i = 0; i < postFix.size(); i++)
+			else
 			{
-				if (postFix[i] == "<" || postFix[i] == "<=" ||
-					postFix[i] == "=" || postFix[i] == ">=" ||
-					postFix[i] == ">" || postFix[i] == "!=" ||
-					postFix[i] == "AND" || postFix[i] == "OR")
+				while ((
+					(UpperToken[i] == "AND" || UpperToken[i] == "OR")
+					&& buff.size() != 0
+					&& (buff.top() != "AND" && buff.top() != "OR"))
+					)
 				{
-					if (res.size() < 2) {
+					postFix.push_back(buff.top());
+					buff.pop();
+				}
+				buff.push(UpperToken[i]);
+			}
+		}
+		else {
+			postFix.push_back(token[i]);
+		}
+	}
+	while (buff.size() != 0)
+	{
+		postFix.push_back(buff.top());
+		buff.pop();
+	}
+	//cal
+
+	vector<uint64_t>* result = new vector<uint64_t>;
+	if (result == NULL) {
+		LogInfo("Unable to allocate memory", 12);
+		return nullptr;
+	}
+	stack<string> res;
+	for (uint64_t index = 0; index < this->Data.size(); index++)
+	{
+		uint8_t* data = this->Data[index];
+		for (uint32_t i = 0; i < postFix.size(); i++)
+		{
+			if (postFix[i] == "<" || postFix[i] == "<=" ||
+				postFix[i] == "=" || postFix[i] == ">=" ||
+				postFix[i] == ">" || postFix[i] == "!=" ||
+				postFix[i] == "AND" || postFix[i] == "OR")
+			{
+				if (res.size() < 2) {
+					LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
+					return nullptr;
+				}
+				string a = res.top(); res.pop();
+				string b = res.top(); res.pop();
+				string op = postFix[i];
+				string ans;
+
+				uint8_t typeIdA = 0;
+				uint8_t typeIdB = 0;
+				uint32_t beginA, lengthA, beginB, lengthB;
+				double diff;
+				if (op == "OR") {
+					if (a == "TRUE" || b == "TRUE") {
+						ans = "TRUE";
+					}
+					else if (a == "FALSE") {
+						ans = b;
+					}
+					else if (b == "FALSE") {
+						ans = a;
+					}
+					else {
 						LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
 						return nullptr;
 					}
-					string a = res.top(); res.pop();
-					string b = res.top(); res.pop();
-					string op = postFix[i];
-					string ans;
-
-					uint8_t typeIdA = 0;
-					uint8_t typeIdB = 0;
-					uint32_t beginA, lengthA, beginB, lengthB;
-					double diff;
-					if (op == "OR") {
-						if (a == "TRUE" || b == "TRUE") {
-							ans = "TRUE";
-						}
-						else if (a == "FALSE") {
-							ans = b;
-						}
-						else if (b == "FALSE") {
-							ans = a;
-						}
-						else {
-							LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
-							return nullptr;
-						}
+				}
+				else if (op == "AND") {
+					if (a == "FALSE" || b == "FALSE") {
+						ans = "FALSE";
 					}
-					else if (op == "AND") {
-						if (a == "FALSE" || b == "FALSE") {
-							ans = "FALSE";
-						}
-						else if (a == "TRUE") {
-							ans = b;
-						}
-						else if (b == "TRUE") {
-							ans = a;
-						}
-						else {
-							LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
-							return nullptr;
-						}
+					else if (a == "TRUE") {
+						ans = b;
+					}
+					else if (b == "TRUE") {
+						ans = a;
 					}
 					else {
-						if (isdigit(a[0]) == false && a[0] != '\'') {
-							if (this->FieldMap.find(a) == this->FieldMap.end()) {
-								LogInfo("Can not find Field named '" + a + "'.", 9);
-								return nullptr;
-							}
-							auto p = this->FieldMap[a];
-							typeIdA = p->FieldType.id;
-							beginA = p->Offset;
-							lengthA = p->FieldSize;
+						LogInfo("Syntax error while analyzing SQL : " + whereStr + ".", 16);
+						return nullptr;
+					}
+				}
+				else {
+					if (isdigit(a[0]) == false && a[0] != '\'') {
+						if (this->FieldMap.find(a) == this->FieldMap.end()) {
+							LogInfo("Can not find Field named '" + a + "'.", 9);
+							return nullptr;
 						}
-						if (isdigit(b[0]) == false && b[0] != '\'') {
-							if (this->FieldMap.find(b) == this->FieldMap.end()) {
-								LogInfo("Can not find Field named '" + b + "'.", 9);
-								return nullptr;
-							}
-							auto p = this->FieldMap[b];
-							typeIdB = p->FieldType.id;
-							beginB = p->Offset;
-							lengthB = p->FieldSize;
+						auto p = this->FieldMap[a];
+						typeIdA = p->FieldType.id;
+						beginA = p->Offset;
+						lengthA = p->FieldSize;
+					}
+					if (isdigit(b[0]) == false && b[0] != '\'') {
+						if (this->FieldMap.find(b) == this->FieldMap.end()) {
+							LogInfo("Can not find Field named '" + b + "'.", 9);
+							return nullptr;
 						}
-						if (typeIdA != 0 && typeIdB != 0) {
-							if (typeIdA != typeIdB) {
-								LogInfo("Can not compare different type.", 14);
-								return nullptr;
-							}
-							if (lengthA != lengthB) {
-								LogInfo("Can not compare different length.", 15);
-								return nullptr;
-							}
+						auto p = this->FieldMap[b];
+						typeIdB = p->FieldType.id;
+						beginB = p->Offset;
+						lengthB = p->FieldSize;
+					}
+					if (typeIdA != 0 && typeIdB != 0) {
+						if (typeIdA != typeIdB) {
+							LogInfo("Can not compare different type.", 14);
+							return nullptr;
 						}
-						if (typeIdA == 0 && typeIdB == 0) {//imm op imm
-							diff = atof(a.c_str()) - atof(b.c_str());
-							if (diff == 0) {
-								if (op == ">=" || op == "<=" || op == "=") {
-									ans = "TRUE";
-								}
-								else {
-									ans = "FALSE";
-								}
-							}
-							else if (diff > 0) {
-								if (op == ">=" || op == ">" || op == "!=") {
-									ans = "TRUE";
-								}
-								else {
-									ans = "FALSE";
-								}
-							}
-							else {
-								if (op == "<=" || op == "<" || op == "!=") {
-									ans = "TRUE";
-								}
-								else {
-									ans = "FALSE";
-								}
-							}
+						if (lengthA != lengthB) {
+							LogInfo("Can not compare different length.", 15);
+							return nullptr;
 						}
-						else if (typeIdA == 0 && typeIdB != 0) {//imm op data
-							if (typeIdB == FieldType_INT.id) {
-								int32_t _a = atoi(a.c_str());
-								int32_t _b = *(int*)(data + beginB);
-								diff = _a - _b;
-							}
-							else if (typeIdB == FieldType_FLOAT.id) {
-								double _a = atof(a.c_str());
-								double _b = *(double*)(data + beginB);
-								diff = _a - _b;
-							}
-							else if (typeIdB == FieldType_CHAR.id) {
-								diff = strcmp(a.c_str(), (char*)data + beginB);
-							}
-							else if (typeIdB == FieldType_BYTE.id) {
-								diff = memcmp(a.c_str(), data + beginB, lengthB);
-							}
-							else {
-								LogInfo("Unknown data type.", 14);
-								return nullptr;
-							}
-
-						}
-						else if (typeIdA != 0 && typeIdB == 0) {//data op imm
-							if (typeIdA == FieldType_INT.id) {
-								int32_t _b = atoi(b.c_str());
-								int32_t _a = *(int*)(data + beginA);
-								diff = _a - _b;
-							}
-							else if (typeIdA == FieldType_FLOAT.id) {
-								double _b = atof(b.c_str());
-								double _a = *(double*)(data + beginA);
-								diff = _a - _b;
-							}
-							else if (typeIdA == FieldType_CHAR.id) {
-								diff = memcmp(data + beginA, b.c_str(), lengthA);
-							}
-							else if (typeIdA == FieldType_BYTE.id) {
-								diff = memcmp(data + beginA, b.c_str(), lengthA);
-							}
-							else {
-								LogInfo("Unknown data type.", 14);
-								return nullptr;
-							}
-
-						}
-						else if (typeIdA != 0 && typeIdB != 0) {//data op data
-							if (typeIdB == FieldType_INT.id) {
-								int32_t _a = *(int*)(data + beginA);
-								int32_t _b = *(int*)(data + beginB);
-								diff = _a - _b;
-							}
-							else if (typeIdB == FieldType_FLOAT.id) {
-								double _a = *(double*)(data + beginA);
-								double _b = *(double*)(data + lengthB);
-								diff = _a - _b;
-							}
-							else if (typeIdB == FieldType_CHAR.id) {
-								diff = memcmp(data + beginA, data + beginB, lengthA);
-							}
-							else if (typeIdB == FieldType_BYTE.id) {
-								diff = memcmp(data + beginA, data + beginB, lengthA);
-							}
-							else {
-								LogInfo("Unknown data type.", 14);
-								return nullptr;
-							}
-						}
-
+					}
+					if (typeIdA == 0 && typeIdB == 0) {//imm op imm
+						diff = atof(a.c_str()) - atof(b.c_str());
 						if (diff == 0) {
 							if (op == ">=" || op == "<=" || op == "=") {
 								ans = "TRUE";
@@ -434,7 +289,7 @@ public:
 								ans = "FALSE";
 							}
 						}
-						else if (diff < 0) {
+						else if (diff > 0) {
 							if (op == ">=" || op == ">" || op == "!=") {
 								ans = "TRUE";
 							}
@@ -451,74 +306,167 @@ public:
 							}
 						}
 					}
-					res.push(ans);
+					else if (typeIdA == 0 && typeIdB != 0) {//imm op data
+						if (typeIdB == FieldType_INT.id) {
+							int32_t _a = atoi(a.c_str());
+							int32_t _b = *(int*)(data + beginB);
+							diff = _a - _b;
+						}
+						else if (typeIdB == FieldType_FLOAT.id) {
+							double _a = atof(a.c_str());
+							double _b = *(double*)(data + beginB);
+							diff = _a - _b;
+						}
+						else if (typeIdB == FieldType_CHAR.id) {
+							diff = strcmp(a.c_str(), (char*)data + beginB);
+						}
+						else if (typeIdB == FieldType_BYTE.id) {
+							diff = memcmp(a.c_str(), data + beginB, lengthB);
+						}
+						else {
+							LogInfo("Unknown data type.", 14);
+							return nullptr;
+						}
+
+					}
+					else if (typeIdA != 0 && typeIdB == 0) {//data op imm
+						if (typeIdA == FieldType_INT.id) {
+							int32_t _b = atoi(b.c_str());
+							int32_t _a = *(int*)(data + beginA);
+							diff = _a - _b;
+						}
+						else if (typeIdA == FieldType_FLOAT.id) {
+							double _b = atof(b.c_str());
+							double _a = *(double*)(data + beginA);
+							diff = _a - _b;
+						}
+						else if (typeIdA == FieldType_CHAR.id) {
+							diff = memcmp(data + beginA, b.c_str(), lengthA);
+						}
+						else if (typeIdA == FieldType_BYTE.id) {
+							diff = memcmp(data + beginA, b.c_str(), lengthA);
+						}
+						else {
+							LogInfo("Unknown data type.", 14);
+							return nullptr;
+						}
+
+					}
+					else if (typeIdA != 0 && typeIdB != 0) {//data op data
+						if (typeIdB == FieldType_INT.id) {
+							int32_t _a = *(int*)(data + beginA);
+							int32_t _b = *(int*)(data + beginB);
+							diff = _a - _b;
+						}
+						else if (typeIdB == FieldType_FLOAT.id) {
+							double _a = *(double*)(data + beginA);
+							double _b = *(double*)(data + lengthB);
+							diff = _a - _b;
+						}
+						else if (typeIdB == FieldType_CHAR.id) {
+							diff = memcmp(data + beginA, data + beginB, lengthA);
+						}
+						else if (typeIdB == FieldType_BYTE.id) {
+							diff = memcmp(data + beginA, data + beginB, lengthA);
+						}
+						else {
+							LogInfo("Unknown data type.", 14);
+							return nullptr;
+						}
+					}
+
+					if (diff == 0) {
+						if (op == ">=" || op == "<=" || op == "=") {
+							ans = "TRUE";
+						}
+						else {
+							ans = "FALSE";
+						}
+					}
+					else if (diff < 0) {
+						if (op == ">=" || op == ">" || op == "!=") {
+							ans = "TRUE";
+						}
+						else {
+							ans = "FALSE";
+						}
+					}
+					else {
+						if (op == "<=" || op == "<" || op == "!=") {
+							ans = "TRUE";
+						}
+						else {
+							ans = "FALSE";
+						}
+					}
 				}
-				else {
-					res.push(postFix[i]);
-				}
-			}
-			if (res.size() == 1) {
-				if (res.top() == "TRUE") {
-					result->push_back(index);
-				}
-				else if (res.top() != "FALSE") {
-					LogInfo("Syntax error.", 15);
-					return nullptr;
-				}
-				res.pop();
+				res.push(ans);
 			}
 			else {
+				res.push(postFix[i]);
+			}
+		}
+		if (res.size() == 1) {
+			if (res.top() == "TRUE") {
+				result->push_back(index);
+			}
+			else if (res.top() != "FALSE") {
 				LogInfo("Syntax error.", 15);
 				return nullptr;
 			}
-
+			res.pop();
+		}
+		else {
+			LogInfo("Syntax error.", 15);
+			return nullptr;
 		}
 
-		return result;
 	}
 
-	const string Print() {
-		stringstream res;
-		res << "========================================================" << "\r\n";
-		res << "[Table Name : " << this->TableName << "]" << "\r\n";
-		for (uint32_t i = 0; this->TableField[i] != 0; i++) {
-			res << setw(15) << this->TableField[i]->FieldName;
-		}
-		res << "\r\n";
-		for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
-		{
-			for (uint32_t i = 0; i < this->TableFieldNum; i++) {
-				if (this->TableField[i]->FieldSize >= 255 || this->TableField[i]->FieldType.id == FieldType_BYTE.id) {
-					res << setw(15) << "***";
+	return result;
+}
+const string Table::Print() {
+	stringstream res;
+	res << "========================================================" << "\r\n";
+	res << "[Table Name : " << this->TableName << "]" << "\r\n";
+	for (uint32_t i = 0; this->TableField[i] != 0; i++) {
+		res << setw(15) << this->TableField[i]->FieldName;
+	}
+	res << "\r\n";
+	for (auto iter = this->Data.begin(); iter != this->Data.end(); iter++)
+	{
+		for (uint32_t i = 0; i < this->TableFieldNum; i++) {
+			if (this->TableField[i]->FieldSize >= 255 || this->TableField[i]->FieldType.id == FieldType_BYTE.id) {
+				res << setw(15) << "***";
+			}
+			else {
+				uint8_t buff[256];
+				memset(buff, 0, 256 * sizeof(uint8_t));
+				uint32_t fieldTypeID = this->TableField[i]->FieldType.id;
+				memcpy(buff, *iter + this->TableField[i]->Offset, this->TableField[i]->FieldSize);
+				if (fieldTypeID == FieldType_CHAR.id)
+				{
+					res << setw(15) << (char*)buff;
 				}
-				else {
-					uint8_t buff[256];
-					memset(buff, 0, 256 * sizeof(uint8_t));
-					uint32_t fieldTypeID = this->TableField[i]->FieldType.id;
-					memcpy(buff, *iter + this->TableField[i]->Offset, this->TableField[i]->FieldSize);
-					if (fieldTypeID == FieldType_CHAR.id)
-					{
-						res << setw(15) << (char*)buff;
-					}
-					else if (fieldTypeID == FieldType_INT.id) {
-						res << setw(15) << *(int*)buff;
+				else if (fieldTypeID == FieldType_INT.id) {
+					res << setw(15) << *(int*)buff;
 
-					}
-					else if (fieldTypeID == FieldType_FLOAT.id) {
-						res << setw(15) << *(double*)buff;
+				}
+				else if (fieldTypeID == FieldType_FLOAT.id) {
+					res << setw(15) << *(double*)buff;
 
-					}
-					else if (fieldTypeID == FieldType_CHAR.id) {
-						res << setw(15) << buff;
-					}
+				}
+				else if (fieldTypeID == FieldType_CHAR.id) {
+					res << setw(15) << buff;
 				}
 			}
-			res << "\r\n";
 		}
-		res << "========================================================" << "\r\n";
-		return res.str();
+		res << "\r\n";
 	}
-};
+	res << "========================================================" << "\r\n";
+	return res.str();
+}
+
 
 /// <summary>
 /// 向表中插入数据
@@ -1116,7 +1064,7 @@ string SQL(DB& db, string sql) {
 		return db[tableName]->Print();
 
 	}
-	else if (upperSql.compare(0, 9,  "DROP TABLE", 0, 9) == 0) {
+	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
 		return tableName + "Drop\n";
@@ -1148,7 +1096,7 @@ string SQL(DB& db, string sql) {
 		free(rowList);
 		return db[from]->Print();
 	}
-	else if (upperSql.compare(0, 5,  "UPDATE", 0, 5) == 0) {
+	else if (upperSql.compare(0, 5, "UPDATE", 0, 5) == 0) {
 		auto setIndex = upperSql.find("SET");
 		auto whereIndex = upperSql.find("WHERE");
 		string whereStr;
@@ -1181,7 +1129,7 @@ string SQL(DB& db, string sql) {
 		return db[tableName]->Print();
 
 	}
-	else if (upperSql.compare(0, 3,  "LOAD", 0, 3) == 0) {
+	else if (upperSql.compare(0, 3, "LOAD", 0, 3) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
 		LoadDatabase(filePath, db);
 		string tableList;
@@ -1190,7 +1138,7 @@ string SQL(DB& db, string sql) {
 		}
 		return "Load form " + filePath + "\r\nTable list : " + tableList;
 	}
-	else if (upperSql.compare(0, 4,  "STORE", 0, 4) == 0) {
+	else if (upperSql.compare(0, 4, "STORE", 0, 4) == 0) {
 		string filePath = strip(split(sql.substr(0, sql.length() - 1), " ")[1]);
 		StoreDatabase(filePath, db);
 		return "Store to " + filePath + "\n";

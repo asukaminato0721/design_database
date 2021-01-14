@@ -11,11 +11,12 @@
 #define new DEBUG_NEW
 #endif
 
+
 DB database;
 
+extern Field* newField[1000];
 
-CAzuSQLDlg::CAzuSQLDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_AZUSQL_DIALOG, pParent)
+CAzuSQLDlg::CAzuSQLDlg( CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -85,7 +86,10 @@ void CAzuSQLDlg::OnBnClickedButtonExec()
 {
 	CString input;
 	GetDlgItemText(IDC_EDIT_SQL, input);
+
+
 	std::string sql = CT2A(input);
+
 
 	std::string result = SQL(database, sql);
 	CString r = CA2T(result.c_str());
@@ -96,6 +100,7 @@ void CAzuSQLDlg::OnBnClickedButtonExec()
 
 void CAzuSQLDlg::OnBnClickedButtonClear()
 {
+	newField[2] = nullptr;
 	SetDlgItemText(IDC_EDIT_RESULT, L"");
 	return;
 }

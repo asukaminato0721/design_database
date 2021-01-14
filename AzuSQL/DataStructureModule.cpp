@@ -22,6 +22,7 @@ const Datatype FieldType_FLOAT = { 3, 8 };
 const Datatype FieldType_CHAR = { 10, 1 };
 const Datatype FieldType_BYTE = { 11, 1 };
 
+Field* newField[100];
 
 string strip(const string& str) {
 	if (str == "") {
