@@ -182,42 +182,24 @@ void CreateUser() {
 	fout.close();
 }
 
-void CreatGrant(string s) {
-	string name;
-	name = "grant ";
-	int i = name.length();
-	name = "";
-	for (; i < s.length() && s[i] != ' '; ++i)
-		name += s[i];
-	TOKEN tok;
-	tok.taken_name = name;
+void CreatGrant(string userName, string op, string object) {
 
-	string t;
-	while (getline(cin, t) && t != "")
-		tok.codes.push_back(t);
-	// idx.codes.push_back(";");
-	token.push_back(tok);
-	cout << "对权限" << tok.taken_name << "的授权信息如下：" << endl;
+	cout << "对权限" << " Grant " << "的授权信息如下：" << endl;
 	ofstream fout;
 	fout.open("token.txt", ios::app);
-	fout << tok.taken_name << "[";
-	for (int r = 3; r < tok.codes[0].length(); r++)
-		fout << tok.codes[0][r];
+	fout << "Grant " << "[";
+	fout << object;
 	fout << "] To ";
-	for (int rr = 3; rr < tok.codes[1].length(); rr++)
-		fout << tok.codes[1][rr];
+	fout << userName;
 	fout << endl;
 
-	cout << "权限名称   ：\t" << tok.taken_name << endl;
-	cout << "所授予权限针对对象\t：";
-	// for(int i = 1; i < v.codes.size()-2; ++i)
-	for (int r = 3; r < tok.codes[0].length(); r++)
-		cout << tok.codes[0][r];
+	cout << "权限名称：Grant" << endl;
+	cout << setw(15) << "所授予权限针对对象：";
+	cout << setw(8) << object << "." << op;
 	cout << endl;
-	cout << "所授予给的用户\t ：";
+	cout << setw(15) << "所授予给的用户：";
 
-	for (int rr = 3; rr < tok.codes[1].length(); rr++)
-		cout << tok.codes[1][rr];
+	cout << setw(8) << userName;
 	cout << endl;
 	fout.close();
 
@@ -268,239 +250,7 @@ void CreatRevoke(string s) {
 }
 
 USER uu;
-/*void Help_op(string op, int& flag) //对应为help语句
-{
 
-	if (op == "help database") {
-
-		int have = 0;
-		flag = 1;
-		cout << "数据库中数据表对象及其属性、属性类型如下：" << endl;
-		for (int i = 0; i < table.size(); ++i) {
-			have = 1;
-			cout << table[i].table_name << "：" << endl;
-			for (int j = 0; j < table[i].col_name.size(); ++j)
-				cout << "属性"
-				<< ":\t" << table[i].col_name[j] << " \t"
-				<< table[i].type_value[j] << "\t" << endl;
-
-			cout << endl;
-		}
-		cout << "数据库中视图对象及其属性、属性类型如下：" << endl;
-		for (int i = 0; i < view.size(); ++i) {
-			have = 1;
-			cout << view[i].view_name << ":" << endl;
-
-			cout << "属性\t：";
-			// for(int i = 1; i < v.codes.size()-2; ++i)
-			for (int r = 5; r < view[i].codes[1].length(); r++)
-				cout << view[i].codes[1][r];
-			cout << endl;
-			cout << "条件\t：";
-
-			for (int rr = 6; rr < view[i].codes[2].length(); rr++)
-				cout << view[i].codes[2][rr];
-			cout << endl;
-		}
-
-		cout << "数据库中索引对象及其索引属性信息如下：" << endl;
-		for (int i = 0; i < index.size(); ++i) {
-			have = 1;
-			cout << index[i].index_name << ":" << endl;
-
-			cout << "索引属性所在表\t：";
-
-			for (int r = 9; r < index[i].codes[0].length(); r++)
-				cout << index[i].codes[0][r];
-			cout << endl;
-			cout << "索引属性\t：";
-
-			for (int rr = 0; rr < index[i].codes[1].length(); rr++)
-				cout << index[i].codes[1][rr];
-			cout << endl;
-			cout << "索引类型\t：";
-
-			for (int rrr = 0; rrr < index[i].codes[2].length(); rrr++)
-				cout << index[i].codes[2][rrr];
-			cout << endl;
-			// for(int j = 0; j < view[i].codes.size(); ++j)
-			//     cout <<view[i].codes[j] << endl;
-			//  cout << endl;
-		}
-
-		if (have == 0)
-			cout << "暂无数据" << endl;
-
-		return;
-	}
-
-	string s = "help table ";
-	int f = 1;
-	for (int i = 0; i < s.length(); ++i) {
-		if (op[i] != s[i]) {
-			f = 0;
-			break;
-		}
-	}
-	if (f == 1) {
-		flag = 1;
-		string name;
-		for (int j = s.length(); j < op.length(); ++j)
-			name += op[j];
-		int ff = 0;
-		for (int k = 0; k < table.size(); ++k) {
-			if (table[k].table_name == name) {
-				cout << "数据表:" << table[k].table_name << "：" << endl;
-				ifstream fin;
-				string tt = table[k].table_name + ".dat";
-				char file[30];
-				for (int i = 0; i < tt.length(); ++i)
-					file[i] = tt[i];
-				file[tt.length()] = '\0';
-				fin.open(file);
-				string t;
-				cout << "包含属性如下：" << endl;
-				while (getline(fin, t))
-					cout << t << endl;
-				cout << endl;
-				ff = 1;
-				return;
-			}
-		}
-		if (!ff)
-			cout << "数据库中还没有该数据表" << endl;
-		return;
-	}
-
-	s = "help view ";
-	f = 1;
-	for (int i = 0; i < s.length(); ++i) {
-		if (op[i] != s[i]) {
-			f = 0;
-			break;
-		}
-	}
-	if (f == 1) {
-		flag = 1;
-		string name;
-		for (int j = s.length(); j < op.length(); ++j)
-			name += op[j];
-		int ff = 0;
-		for (int k = 0; k < view.size(); ++k) {
-			if (view[k].view_name == name) {
-				cout << "帮助信息如下：" << endl;
-				cout << "视图名称：" << view[k].view_name << ":" << endl;
-
-				ifstream fin;                           //
-				string tt = view[k].view_name + ".dat"; //
-				char file[30];                          //
-				for (int i = 0; i < tt.length(); i++)   //
-					file[i] = tt[i];                    //
-				file[tt.length()] = '\0';               //
-				fin.open(file);                         //
-				string t;                               //
-				while (getline(fin, t))                 //
-					cout << t << endl;                  //
-				//
-				ff = 1; //
-
-				cout << "属性\t：";
-				// for(int i = 1; i < v.codes.size()-2; ++i)
-				for (int r = 5; r < view[k].codes[1].length(); r++)
-					cout << view[k].codes[1][r];
-				cout << endl;
-				cout << "条件\t：";
-
-				for (int rr = 6; rr < view[k].codes[2].length(); rr++)
-					cout << view[k].codes[2][rr];
-				cout << endl;
-
-				return;
-			}
-		}
-		if (!ff)
-			cout << "没有该视图" << endl;
-
-		return;
-	}
-
-	s = "help index ";
-	f = 1;
-	for (int i = 0; i < s.length(); ++i) {
-		if (op[i] != s[i]) {
-			f = 0;
-			break;
-		}
-	}
-	if (f == 1) {
-		flag = 1;
-		string name;
-		for (int j = s.length(); j < op.length(); ++j)
-			name += op[j];
-		int ff = 0;
-		for (int k = 0; k < index.size(); ++k) {
-			if (index[k].index_name == name) {
-				cout << "帮助信息如下：" << endl;
-				cout << "索引名称：" << index[k].index_name << ":" << endl;
-
-				ifstream fin;                             //
-				string tt = index[k].index_name + ".dat"; //
-				char file[30];                            //
-				for (int i = 0; i < tt.length(); i++)     //
-					file[i] = tt[i];                      //
-				file[tt.length()] = '\0';                 //
-				fin.open(file);                           //
-				string t;                                 //
-				while (getline(fin, t))                   //
-					cout << t << endl;                    //
-				//
-				ff = 1; //
-
-				cout << "索引属性所在表\t：";
-
-				for (int r = 9; r < index[k].codes[0].length(); r++)
-					cout << index[k].codes[0][r];
-				cout << endl;
-				cout << "索引属性\t：";
-
-				for (int rr = 0; rr < index[k].codes[1].length(); rr++)
-					cout << index[k].codes[1][rr];
-				cout << endl;
-
-				cout << "索引类型\t：";
-
-				for (int rrr = 0; rrr < index[k].codes[2].length(); rrr++)
-					cout << index[k].codes[2][rrr];
-				cout << endl;
-
-				return;
-			}
-		}
-		if (!ff)
-			cout << "没有该视图" << endl;
-
-		return;
-	}
-}
-
-*/
-void CreateGrant_op(string op, int& flag) //建立授权
-{
-	string s = "grant ";
-	int f = 1;
-	for (int i = 0; i < s.length(); ++i) {
-		if (op[i] != s[i]) {
-			f = 0;
-			break;
-		}
-	}
-	if (f) {
-		flag = 8;
-		CreatGrant(op);
-	}
-
-	return;
-}
 
 void CreateRevoke_op(string op, int& flag) //建立撤销授权
 {
@@ -1719,14 +1469,14 @@ string SQL(DB& db, string sql) {
 		string op = tokens[1];
 		string tableName = tokens[4];
 		string userName = tokens[6];
-
+		CreatGrant(userName, op, tableName);
 	}
 	else if (upperSql.compare(0, 5, "REVOKE", 0, 5) == 0) {
 		auto tokens = split(sql.substr(0, sql.length() - 1), " ");
 		string op = tokens[1];
 		string tableName = tokens[4];
 		string userName = tokens[6];
-
+		CreatRevoke(sql);
 	}
 	return "Unknown SQL.";
 }
