@@ -4230,7 +4230,7 @@ ul {
 }
 
 .height-120 {
-    height: 120px;
+    height: 360px;
 }
 
 .height-640 {
@@ -4248,7 +4248,6 @@ ul {
 }
 
 .ouput {
-    border-style: inset;
     margin-left: 240px;
     margin-right: 4px;
 }
@@ -4832,9 +4831,28 @@ ul {
 }
 
 .per-70 {
-    height: 470px;
+    height: 160px;
 }
 
 .per-20 {
     height: 20%;
+}
+
+.table-name {
+    margin-left: 12px;
+}
+
+.table-table {
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+    vertical-align: middle;
+    padding: 15px 0;
+    border-color: #eee;
+}
+
+.text-center {
+    text-align: right;
+    font-size: 36px;
+    font-style: oblique;
 }
