@@ -185,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="DataStructureModule.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Login.h" />
     <ClInclude Include="MyDBMS.h" />
     <ClInclude Include="MyDBMSDlg.h" />
     <ClInclude Include="pch.h" />
@@ -193,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructureModule.cpp" />
+    <ClCompile Include="Login.cpp" />
     <ClCompile Include="MyDBMS.cpp" />
     <ClCompile Include="MyDBMSDlg.cpp" />
     <ClCompile Include="pch.cpp">

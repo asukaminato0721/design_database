@@ -67,7 +67,35 @@ public:
 };
 
 
+class USER {
+	//用户数据结构
+public:
+	string name;
+	string password;
+	string right_super;
+	string right_ordinary;
+
+	string right_select;
+	string right_insert;
+	string right_delete;
+	string right_update;
+	USER::USER(string name, string password, string right_super, string right_ordinary);
+	USER::USER();
+
+};
+class TOKEN
+{
+	//索引的数据结构
+public:
+	vector<string> codes;
+	string taken_name;
+	TOKEN();
+};
+
+
 
 string strip(const string& str);
 vector<string> split(const string& str, const string& delim);
 string SQL(DB& db, string sql);
+void CreateUser(string name, string password, uint8_t privileges);
+USER UserCompare(string name, string password);

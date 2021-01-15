@@ -1,9 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-
 #include "./DataStructureModule.h"
 using namespace std;
 
@@ -1479,29 +1476,51 @@ string SQL(DB& db, string sql) {
 
 int main() {
 	DB database = DB();
-
-	Start(); //初始界面
-	Login(); //用户注册or登录
-	while (true)
+	clock_t a;
+	a = clock();
+	for (size_t i = 0; i < 1000; i++)
 	{
-		string input;
-		getline(cin, input);
-		auto begin = clock();
-		auto ans = SQL(database, input);
-		auto end = clock();
-		if (ans.size() < 100000) {
-			cout << ans << endl;
-		}
-		else {
-			cout << "Result too long" << endl;
-		}
-		cout << "Exec " << end - begin << " ms" << endl;
-
+		SQL(database, "CREATE TABLE TEST (a int,b char(32),c float);");
 	}
+	cout << "CREATE " << clock() - a << "ms" << endl;
+
+	a = clock();
+	for (size_t i = 0; i < 1000; i++)
+	{
+		SQL(database, "INSERT INTO TEST VALUES (100,'abcdefghijklmnopqrst',1.234);");
+	}
+	cout << "INSERT " << clock() - a << "ms" << endl;
+
+
+	a = clock();
+	for (size_t i = 0; i < 1000; i++)
+	{
+		SQL(database, "SELECT * FROM TEST WHERE TEST.a = 100;");
+	}
+	cout << "WHERE " << clock() - a << "ms" << endl;
+
+
+	a = clock();
+	for (size_t i = 0; i < 1000; i++)
+	{
+		SQL(database, "SELECT TEST.a FROM TEST;");
+	}
+	cout << "SELECT " << clock() - a << "ms" << endl;
+
+	a = clock();
+	for (size_t i = 0; i < 10; i++)
+	{
+		SQL(database, "SELECT * FROM TEST,TEST;");
+	}
+	cout << "FROM " << clock() - a << "ms" << endl;
+
+
+
+	
+
+
 
 	return 0;
 
-
-	_CrtDumpMemoryLeaks();
 
 }

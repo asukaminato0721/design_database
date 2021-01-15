@@ -36,6 +36,9 @@
     <ClInclude Include="DataStructureModule.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Login.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyDBMS.cpp">
@@ -48,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DataStructureModule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Login.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

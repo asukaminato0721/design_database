@@ -10,10 +10,6 @@ using namespace std;
 
 //TODO delete 中不允许完整属性名
 
-
-
-
-
 using namespace std;
 static int f = 0;
 //初始界面显示；
@@ -31,46 +27,24 @@ void Start() {
 		;
 }
 
-class USER {
-	//用户数据结构
-public:
-	string name;
-	string password;
-	string right_super;
-	string right_ordinary;
 
-	string right_select;
-	string right_insert;
-	string right_delete;
-	string right_update;
 
-	//定义用户姓名密码读写权限
-	USER(string name, string password, string right_super,
-		string right_ordinary) {
-		this->name = name;
-		this->password = password;
-		this->right_super = right_super;
-		this->right_ordinary = right_ordinary;
-	}
+//定义用户姓名密码读写权限
+USER::USER(string name, string password, string right_super, string right_ordinary) {
+	this->name = name;
+	this->password = password;
+	this->right_super = right_super;
+	this->right_ordinary = right_ordinary;
+}
+USER::USER() {
+	this->name = "\0";
+	this->password = "\0";
+	this->right_super = "false";
+	this->right_ordinary = "false";
+}
+TOKEN::TOKEN() { }
 
-	USER() {
-		this->name = "\0";
-		this->password = "\0";
-		this->right_super = "false";
-		this->right_ordinary = "false";
-	}
-};
-class TOKEN
-{
-	//索引的数据结构
-public:
-	vector<string> codes;
-	string taken_name;
-
-	TOKEN() { }
-};
 vector<TOKEN> token;
-
 
 //将读取到的字符串（文件中的一行）解析成User的各属性
 USER StringToUser(string s) {
@@ -127,7 +101,6 @@ USER StringToUser(string s) {
 
 	return temp;
 }
-
 // 读取文件并比较，相同则返回该用户，否则返回空用户
 USER UserCompare(string name, string password) {
 	USER temp;
@@ -147,33 +120,17 @@ USER UserCompare(string name, string password) {
 	USER t;
 	return t;
 }
-
 //创建用户
-void CreateUser() {
+void CreateUser(string name, string password, uint8_t privileges) {
 	USER u;
-	string name, password;
-	printf("请输入注册用户名:");
-	cin >> name;
-	printf("\n");
-	printf("请输入注册密码:");
-	cin >> password;
-	printf("\n");
-	cout << "-----------------------" << endl;
-	string privileges;
-	cout << "请输入用户的类型：（超级用户:s  普通用户:o  不区分大小写）"
-		<< endl;
-	cin >> privileges;
-	printf("\n");
+
 	u.name = name;
 	u.password = password;
 	//赋予读写权限
-	for (int i = 0; i < privileges.length(); ++i) {
-		if (privileges[i] == 's' || privileges[i] == 'S')
-			u.right_super = "true";
-		else if (privileges[i] == 'o' || privileges[i] == 'O')
-			u.right_ordinary = "true";
-	}
-
+	if (privileges == 0)
+		u.right_super = "true";
+	else if (privileges == 1)
+		u.right_ordinary = "true";
 	//文件输入输出流，不存在则自动创建
 	ofstream fout;
 	fout.open("user.dat", ios::app);
@@ -182,7 +139,6 @@ void CreateUser() {
 		<< endl;
 	fout.close();
 }
-
 void CreatGrant(string userName, string op, string object) {
 
 	cout << "对权限" << " Grant " << "的授权信息如下：" << endl;
@@ -206,7 +162,6 @@ void CreatGrant(string userName, string op, string object) {
 
 	cout << "授权成功！" << endl;
 }
-
 void CreatRevoke(string s) {
 	string name;
 	name = "revoke ";
@@ -249,10 +204,7 @@ void CreatRevoke(string s) {
 
 	cout << "回收成功！" << endl;
 }
-
 USER uu;
-
-
 void CreateRevoke_op(string op, int& flag) //建立撤销授权
 {
 	string s = "revoke ";
@@ -270,7 +222,6 @@ void CreateRevoke_op(string op, int& flag) //建立撤销授权
 
 	return;
 }
-
 int Login() {
 
 	string name;
@@ -278,23 +229,7 @@ int Login() {
 	USER user; //用户
 
 	string ch;
-	// loop:
-	while (true) //循环体
-	{
-		cin >> ch;
-		if (ch == "1")
-			break; // ch为1时，直接退出
-		else if (ch == "2") {
-			CreateUser();
-			cout << "创建新用户成功" << endl;
-			break;
-		}
-		else {
-			cout << "您的输入有误，请重新输入……" << endl;
-			f = 1;
-			Start();
-		}
-	}
+
 	while (true) {
 		printf("登录名:");
 		cin >> name;
@@ -328,6 +263,8 @@ int Login() {
 	cout << "用户登录成功,请输入SQL语句:" << endl;
 	return 0;
 }
+
+
 
 
 string strip(const string& str) {
@@ -837,11 +774,11 @@ Table* Insert(Table* pTable, const vector<string> fieldNameList, const vector<st
 			{
 				int32_t diff = 1;
 				if (type == FieldType_INT.id) {
-					diff = atoi(valuesList[i].c_str()) - atoi((char*)pTable->Data[j] + offset);
+					diff = atoi(valuesList[i].c_str()) - *(int*)(pTable->Data[j] + offset);
 				}
 				else if (type == FieldType_FLOAT.id)
 				{
-					double value = atof(valuesList[i].c_str()) - atof((char*)pTable->Data[j] + offset);
+					double value = atof(valuesList[i].c_str()) - *(float*)(pTable->Data[j] + offset);
 					diff = (value != 0);
 				}
 				else if (type == FieldType_CHAR.id || type == FieldType_BYTE.id) {
@@ -1322,7 +1259,14 @@ string SQL(DB& db, string sql) {
 	else if (upperSql.compare(0, 11, "CREATE TABLE", 0, 11) == 0) {
 		auto begin = sql.find("(");
 		auto end = sql.rfind(")");
+
+
 		string tableNamestr = sql.substr(13, begin - 12 - 2);
+		if (db.find(tableNamestr) != db.end()) {
+			LogInfo("Table already exists : " + tableNamestr, 12);
+			return "Table already exists : " + tableNamestr;
+		}
+
 		Table* pTable = new Table(tableNamestr);
 		string fieldstr = sql.substr(begin + 1, end - begin - 1);
 		auto fields = split(fieldstr, ",");
@@ -1372,6 +1316,11 @@ string SQL(DB& db, string sql) {
 			pTable->AddField(pField);
 		}
 		db[pTable->TableName] = pTable;
+		vector<string> tableList;
+		for (auto i = db.begin(); i != db.end(); ++i) {
+			tableList.push_back(i->second->TableName);
+		}
+		ShowList(tableList);
 		return pTable->Print();
 	}
 	else if (upperSql.compare(0, 10, "INSERT INTO", 0, 10) == 0) {
@@ -1406,6 +1355,11 @@ string SQL(DB& db, string sql) {
 	else if (upperSql.compare(0, 9, "DROP TABLE", 0, 9) == 0) {
 		string tableName = sql.substr(10 + 1, sql.length() - 10 - 2);
 		Drop(db, tableName);
+		vector<string> tableList;
+		for (auto i = db.begin(); i != db.end(); ++i) {
+			tableList.push_back(i->second->TableName);
+		}
+		ShowList(tableList);
 		return tableName + "Drop\n";
 
 	}
@@ -1501,6 +1455,7 @@ string SQL(DB& db, string sql) {
 		string userName = tokens[6];
 		CreatRevoke(sql);
 	}
+
 	return "Unknown SQL.";
 }
 
