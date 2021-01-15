@@ -37,4 +37,5 @@ public:
 	CListCtrl m_listResult;
 	afx_msg void OnBnClickedButtonSubmit();
 	CListBox m_tableList;
+	afx_msg void OnLbnDblclkListTables();
 };

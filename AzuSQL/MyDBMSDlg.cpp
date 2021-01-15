@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CMyDBMSDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_SUBMIT, &CMyDBMSDlg::OnBnClickedButtonSubmit)
+	ON_LBN_DBLCLK(IDC_LIST_TABLES, &CMyDBMSDlg::OnLbnDblclkListTables)
 END_MESSAGE_MAP()
 
 
@@ -73,7 +74,7 @@ void ShowTable(std::vector<std::vector<std::string>> data) {
 		dlg->m_listResult.InsertColumn(i, CA2T(data[0][i].c_str()));
 		dlg->m_listResult.SetColumnWidth(i, rect.Width() / data[0].size());
 	}
-	for (size_t i = 0; i < data.size(); i++)
+	for (size_t i = 1; i < data.size(); i++)
 	{
 		dlg->m_listResult.InsertItem(0, CA2T(data[i][0].c_str()));
 		for (size_t j = 1; j < data[0].size(); j++)
@@ -144,5 +145,25 @@ void CMyDBMSDlg::OnBnClickedButtonSubmit()
 	GetDlgItemText(IDC_EDIT_SQL, input);
 	std::string sql;
 	sql = CT2A(input);
-	SQL(database, sql);
+	auto sqlSingle = split(sql, "\r\n");
+	for (size_t i = 0; i < sqlSingle.size(); i++)
+	{
+		SQL(database, sqlSingle[i]);
+	}
+}
+
+
+void CMyDBMSDlg::OnLbnDblclkListTables()
+{
+
+	CString strText;
+	int nIndex = m_tableList.GetCurSel();
+	if (nIndex == -1) {
+		return;
+	}
+	m_tableList.GetText(nIndex, strText);
+	std::string tablename;
+	tablename = CT2A(strText);
+
+	SQL(database, "SELECT * FROM " + tablename + ";");
 }
