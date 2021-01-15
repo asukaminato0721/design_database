@@ -128,6 +128,8 @@ def getResult(
                 elif parsed_l[i][0].lower() == "where":
                     parsed.wheres = list(parsed_l[i][1].split(","))
     # format_parsed(parsed, tables_other_name, {})
+    for i in range(len(parsed.tables)): #除去from中表的别名
+        parsed.tables[i] = list(parsed.tables[i].split(" "))[0]
     tables_cols = {
         table: [field.FieldName for field in FindTable(table).TableField]
         for table in parsed.tables
@@ -174,4 +176,5 @@ def sql(sql):
     return
 
 if __name__ == "__main__":
-    print(getResult("select No from Student where No>10011"))
+    PrintTable(FindTable("Score"))
+    print(getResult("select a.No,b.Score from Student a,Score b where a.No>10013"))
